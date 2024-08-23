@@ -15,6 +15,8 @@
  */
 package com.android.wallpaper.modules
 
+import com.android.wallpaper.effects.DefaultEffectsController
+import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.module.DefaultPartnerProvider
 import com.android.wallpaper.module.DefaultWallpaperPreferences
 import com.android.wallpaper.module.Injector
@@ -41,29 +43,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class WallpaperPicker2AppModule {
-    @Binds @Singleton abstract fun bindInjector(impl: WallpaperPicker2Injector): Injector
-
-    @Binds
-    @Singleton
-    abstract fun bindWallpaperCategoryClient(
-        impl: DefaultWallpaperCategoryClientImpl
-    ): DefaultWallpaperCategoryClient
-
-    @Binds
-    @Singleton
-    abstract fun bindWallpaperModelFactory(
-        impl: DefaultWallpaperModelFactory
-    ): WallpaperModelFactory
-
-    @Binds
-    @Singleton
-    abstract fun bindPartnerProvider(impl: DefaultPartnerProvider): PartnerProvider
-
-    @Binds
-    @Singleton
-    abstract fun bindEffectsWallpaperDialogUtil(
-        impl: DefaultImageEffectDialogUtil
-    ): ImageEffectDialogUtil
 
     @Binds
     @Singleton
@@ -73,9 +52,38 @@ abstract class WallpaperPicker2AppModule {
 
     @Binds
     @Singleton
+    abstract fun bindDefaultWallpaperCategoryClient(
+        impl: DefaultWallpaperCategoryClientImpl
+    ): DefaultWallpaperCategoryClient
+
+    @Binds
+    @Singleton
+    abstract fun bindEffectsController(impl: DefaultEffectsController): EffectsController
+
+    @Binds
+    @Singleton
+    abstract fun bindImageEffectDialogUtil(
+        impl: DefaultImageEffectDialogUtil
+    ): ImageEffectDialogUtil
+
+    @Binds @Singleton abstract fun bindInjector(impl: WallpaperPicker2Injector): Injector
+
+    @Binds
+    @Singleton
+    abstract fun bindPartnerProvider(impl: DefaultPartnerProvider): PartnerProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindWallpaperModelFactory(
+        impl: DefaultWallpaperModelFactory
+    ): WallpaperModelFactory
+
+    @Binds
+    @Singleton
     abstract fun bindWallpaperPreferences(impl: DefaultWallpaperPreferences): WallpaperPreferences
 
     companion object {
+
         @Provides
         @Singleton
         fun provideUserEventLogger(): UserEventLogger {
