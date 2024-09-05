@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.wallpaper.picker.category.data.repository
+package com.android.wallpaper.picker.category.domain.interactor
 
 import com.android.wallpaper.picker.data.category.CategoryModel
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 /**
- * This is the common repository interface that is responsible for communicating with wallpaper
- * category data clients and also convert them to CategoryData classes.
+ * Classes that implement this interface implement the business logic for assembling categories from
+ * third party apps
  */
-interface WallpaperCategoryRepository {
-    val systemCategories: StateFlow<List<CategoryModel>>
-    val myPhotosCategory: StateFlow<CategoryModel?>
-    val onDeviceCategory: StateFlow<CategoryModel?>
-    val thirdPartyAppCategory: StateFlow<List<CategoryModel>>
-    val isDefaultCategoriesFetched: StateFlow<Boolean>
-
-    suspend fun fetchMyPhotosCategory()
+interface ThirdPartyCategoryInteractor {
+    val categories: Flow<List<CategoryModel>>
 }

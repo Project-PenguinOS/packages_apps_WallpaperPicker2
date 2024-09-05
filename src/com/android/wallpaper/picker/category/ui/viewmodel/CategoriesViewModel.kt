@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.wallpaper.picker.category.domain.interactor.CategoryInteractor
 import com.android.wallpaper.picker.category.domain.interactor.CreativeCategoryInteractor
 import com.android.wallpaper.picker.category.domain.interactor.MyPhotosInteractor
+import com.android.wallpaper.picker.category.domain.interactor.ThirdPartyCategoryInteractor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 
 /** Top level [ViewModel] for the categories screen */
@@ -38,6 +40,7 @@ constructor(
     private val singleCategoryInteractor: CategoryInteractor,
     private val creativeWallpaperInteractor: CreativeCategoryInteractor,
     private val myPhotosInteractor: MyPhotosInteractor,
+    private val thirdPartyCategoryInteractor: ThirdPartyCategoryInteractor,
 ) : ViewModel() {
 
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
@@ -65,13 +68,32 @@ constructor(
         }
     }
 
-    private val individualSectionViewModels: Flow<List<SectionViewModel>> =
+    private val thirdPartyCategorySections: Flow<List<SectionViewModel>> =
+        thirdPartyCategoryInteractor.categories.map { categories ->
+            return@map categories.map { category ->
+                SectionViewModel(
+                    tileViewModels =
+                        listOf(
+                            TileViewModel(null, null, category.commonCategoryData.title) {
+                                navigateToThirdPartyApp(category.commonCategoryData.collectionId)
+                            }
+                        ),
+                    columnCount = 1
+                )
+            }
+        }
+
+    private val defaultCategorySections: Flow<List<SectionViewModel>> =
         singleCategoryInteractor.categories.map { categories ->
             return@map categories.map { category ->
                 SectionViewModel(
                     tileViewModels =
                         listOf(
-                            TileViewModel(null, category.commonCategoryData.title) {
+                            TileViewModel(
+                                defaultDrawable = null,
+                                thumbnailAsset = null,
+                                text = category.commonCategoryData.title,
+                            ) {
                                 //  TODO(b/352081782): check if there is a single wallpaper
                                 navigateToWallpaperCollection(
                                     category.commonCategoryData.collectionId
@@ -83,11 +105,18 @@ constructor(
             }
         }
 
+    private val individualSectionViewModels: Flow<List<SectionViewModel>> =
+        defaultCategorySections.zip(thirdPartyCategorySections) { list1, list2 -> list1 + list2 }
+
     private val creativeSectionViewModel: Flow<SectionViewModel> =
         creativeWallpaperInteractor.categories.map { categories ->
             val tiles =
                 categories.map { category ->
-                    TileViewModel(null, category.commonCategoryData.title)
+                    TileViewModel(
+                        defaultDrawable = null,
+                        thumbnailAsset = null,
+                        text = category.commonCategoryData.title,
+                    )
                 }
             return@map SectionViewModel(tileViewModels = tiles, columnCount = 3)
         }
@@ -97,7 +126,11 @@ constructor(
             SectionViewModel(
                 tileViewModels =
                     listOf(
-                        TileViewModel(null, category.commonCategoryData.title) {
+                        TileViewModel(
+                            defaultDrawable = category.imageCategoryData?.defaultDrawable,
+                            thumbnailAsset = category.imageCategoryData?.thumbnailAsset,
+                            text = category.commonCategoryData.title,
+                        ) {
                             // TODO(b/352081782): trigger the effect with effect controller
                             navigateToPhotosPicker()
                         }
