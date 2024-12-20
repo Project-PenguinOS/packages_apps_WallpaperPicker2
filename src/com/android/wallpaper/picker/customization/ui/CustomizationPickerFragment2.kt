@@ -16,9 +16,6 @@
 
 package com.android.wallpaper.picker.customization.ui
 
-import android.annotation.TargetApi
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Point
 import android.os.Bundle
@@ -98,7 +95,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
 
     private var fullyCollapsed = false
     private var navBarHeight: Int = 0
-    private var configuration: Configuration? = null
 
     private var onBackPressedCallback: OnBackPressedCallback? = null
 
@@ -112,8 +108,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        configuration = Configuration(resources.configuration)
-
         val isFromLauncher =
             activity?.intent?.let { ActivityUtils.isLaunchedFromLauncher(it) } ?: false
         if (isFromLauncher) {
@@ -165,7 +159,13 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
                         currentId == R.id.expanded_header_primary ||
                             currentId == R.id.collapsed_header_primary
                     ) {
+                        // This is when we complete the transition back to the primary screen
                         pickerMotionContainer.setTransition(R.id.transition_primary)
+                        // Reset the preview only after the transition is completed, because the
+                        // reset will trigger the animation of the UI components in the floating
+                        // sheet content, which can possibly be interrupted by the floating sheet
+                        // translating down.
+                        customizationPickerViewModel.customizationOptionsViewModel.resetPreview()
                     }
                 }
             }
@@ -212,7 +212,7 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             viewModel = customizationPickerViewModel,
             colorUpdateViewModel = colorUpdateViewModel,
             customizationOptionsBinder = customizationOptionsBinder,
-            lifecycleOwner = this,
+            lifecycleOwner = viewLifecycleOwner,
             navigateToPrimary = {
                 if (pickerMotionContainer.currentState == R.id.secondary) {
                     pickerMotionContainer.transitionToState(
@@ -267,19 +267,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
 
         super.onDestroyView()
         onBackPressedCallback?.remove()
-    }
-
-    @TargetApi(36)
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        configuration?.let {
-            val diff = newConfig.diff(it)
-            val isAssetsPathsChange = diff and ActivityInfo.CONFIG_ASSETS_PATHS != 0
-            if (isAssetsPathsChange) {
-                colorUpdateViewModel.updateColors()
-            }
-        }
-        configuration?.setTo(newConfig)
     }
 
     private fun setupToolbar(navButton: FrameLayout, toolbar: Toolbar, applyButton: Button) {
