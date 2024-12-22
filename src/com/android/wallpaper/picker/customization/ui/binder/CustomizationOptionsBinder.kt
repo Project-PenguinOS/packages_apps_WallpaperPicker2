@@ -42,6 +42,8 @@ interface CustomizationOptionsBinder {
         colorUpdateViewModel: ColorUpdateViewModel,
         lifecycleOwner: LifecycleOwner,
         navigateToWallpaperCategoriesScreen: (screen: Screen) -> Unit,
+        navigateToMoreLockScreenSettingsActivity: () -> Unit,
+        navigateToColorContrastSettingsActivity: () -> Unit,
     )
 
     fun bindClockPreview(
