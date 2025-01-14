@@ -241,7 +241,7 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
                     }
                 }
             },
-            navigateToCategoriesScreen = { _ ->
+            navigateToWallpaperCategoriesScreen = { _ ->
                 if (isAdded) {
                     parentFragmentManager.commit {
                         replace<CategoriesFragment>(R.id.fragment_container)
@@ -260,6 +260,13 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             navigateToLockScreenNotificationsSettingsActivity = {
                 activity?.startActivity(Intent(Settings.ACTION_LOCKSCREEN_NOTIFICATIONS_SETTINGS))
             },
+        )
+
+        customizationOptionsBinder.bindDiscardChangesDialog(
+            customizationOptionsViewModel =
+                customizationPickerViewModel.customizationOptionsViewModel,
+            lifecycleOwner = viewLifecycleOwner,
+            activity = requireActivity(),
         )
 
         activity?.onBackPressedDispatcher?.let {
