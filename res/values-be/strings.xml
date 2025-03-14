@@ -92,7 +92,7 @@
     <string name="tab_customize" msgid="2533745409174959960">"Наладка"</string>
     <string name="tab_effects" msgid="3213606157589233901">"Эфекты"</string>
     <string name="tab_share" msgid="6676269624804601227">"Абагуліць"</string>
-    <string name="my_photos" msgid="8613021349284084982">"Мае фатаграфіі"</string>
+    <string name="my_photos" msgid="8613021349284084982">"Мае фота"</string>
     <string name="configure_wallpaper" msgid="849882179182976621">"Налады…"</string>
     <string name="delete_live_wallpaper" msgid="589212696102662329">"Выдаліць"</string>
     <string name="edit_live_wallpaper" msgid="3132060073690558045">"Змяніць"</string>
@@ -150,4 +150,14 @@
     <string name="discard_changes_dialog_message" msgid="8462485277292103457">"Адхіліць змяненні?"</string>
     <string name="discard_changes_dialog_button_keep_editing" msgid="9118931326834547216">"Працягнуць рэдагаванне"</string>
     <string name="discard_changes_dialog_button_discard" msgid="6585071548322908206">"Адхіліць"</string>
+    <!-- no translation found for action_zoom_in (3326782160671405449) -->
+    <skip />
+    <!-- no translation found for action_zoom_out (5454911090443175449) -->
+    <skip />
+    <!-- no translation found for zoomed_to_percent (1243039994190840132) -->
+    <skip />
+    <!-- no translation found for max_zoom_percentage (2111670558746866030) -->
+    <skip />
+    <!-- no translation found for min_zoom_percentage (5931879817379214316) -->
+    <skip />
 </resources>

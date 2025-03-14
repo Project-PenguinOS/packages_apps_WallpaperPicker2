@@ -58,6 +58,7 @@ import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptionsBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationPickerBinder2
 import com.android.wallpaper.picker.customization.ui.binder.PagerTouchInterceptorBinder
+import com.android.wallpaper.picker.customization.ui.binder.PreviewLabelBinder
 import com.android.wallpaper.picker.customization.ui.binder.ToolbarBinder
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil.CustomizationOption
@@ -127,7 +128,7 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             view.requireViewById(R.id.apply_button),
         )
 
-        val pickerMotionContainer = view.requireViewById<MotionLayout>(R.id.picker_motion_layout)
+        val pickerMotionContainer: MotionLayout = view.requireViewById(R.id.picker_motion_layout)
         ViewCompat.setOnApplyWindowInsetsListener(pickerMotionContainer) { _, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             navBarHeight = insets.bottom
@@ -150,12 +151,13 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             )
 
         val previewViewModel = customizationPickerViewModel.basePreviewViewModel
-        previewViewModel.setWhichPreview(WallpaperConnection.WhichPreview.EDIT_CURRENT)
+        previewViewModel.setWhichPreview(WallpaperConnection.WhichPreview.PREVIEW_CURRENT)
         // TODO (b/348462236): adjust flow so this is always false when previewing current wallpaper
         previewViewModel.setIsWallpaperColorPreviewEnabled(false)
 
         initPreviewPager(
-            view = view,
+            pagerTouchInterceptor = view.requireViewById(R.id.pager_touch_interceptor),
+            previewPager = view.requireViewById(R.id.preview_pager),
             isFirstBinding = savedInstanceState == null,
             initialScreen = if (isFromLauncher) HOME_SCREEN else LOCK_SCREEN,
         )
@@ -164,14 +166,9 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             view.requireViewById(R.id.customization_option_container)
         val wallpaperPickerEntry: WallpaperPickerEntry =
             view.requireViewById(R.id.wallpaper_picker_entry)
-        val lockPreviewLabel: TextView =
-            view.requireViewById<View>(R.id.lock_preview).requireViewById(R.id.preview_label)
-        val homePreviewLabel: TextView =
-            view.requireViewById<View>(R.id.home_preview).requireViewById(R.id.preview_label)
         view.post {
             val wallpaperPickerEntryExpandedHeight = wallpaperPickerEntry.height
             val wallpaperPickerEntryCollapsedHeight = wallpaperPickerEntry.collapsedButton.height
-            val previewLabelHeight = lockPreviewLabel.height
             // The expanded / collapsed header height should be updated when optionContainer
             // height is known.
             // For expanded, it needs to show at least half of the entry view below the wallpaper
@@ -213,14 +210,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
                         ) {
                             wallpaperPickerEntry.setProgress(progress)
                         }
-
-                        if (endId == R.id.secondary) {
-                            val newHeight = (previewLabelHeight * (1 - progress)).toInt()
-                            lockPreviewLabel.layoutParams =
-                                lockPreviewLabel.layoutParams.apply { height = newHeight }
-                            homePreviewLabel.layoutParams =
-                                homePreviewLabel.layoutParams.apply { height = newHeight }
-                        }
                     }
 
                     override fun onTransitionCompleted(
@@ -231,21 +220,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
                             wallpaperPickerEntry.setProgress(0f)
                         } else if (currentId == R.id.collapsed_header_primary) {
                             wallpaperPickerEntry.setProgress(1f)
-                        }
-
-                        if (
-                            currentId == R.id.expanded_header_primary ||
-                                currentId == R.id.collapsed_header_primary
-                        ) {
-                            lockPreviewLabel.layoutParams =
-                                lockPreviewLabel.layoutParams.apply { height = previewLabelHeight }
-                            homePreviewLabel.layoutParams =
-                                homePreviewLabel.layoutParams.apply { height = previewLabelHeight }
-                        } else if (currentId == R.id.secondary) {
-                            lockPreviewLabel.layoutParams =
-                                lockPreviewLabel.layoutParams.apply { height = 0 }
-                            homePreviewLabel.layoutParams =
-                                homePreviewLabel.layoutParams.apply { height = 0 }
                         }
 
                         if (
@@ -381,14 +355,17 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
         }
     }
 
-    private fun initPreviewPager(view: View, isFirstBinding: Boolean, initialScreen: Screen) {
+    private fun initPreviewPager(
+        pagerTouchInterceptor: View,
+        previewPager: ClickableMotionLayout,
+        isFirstBinding: Boolean,
+        initialScreen: Screen,
+    ) {
         PagerTouchInterceptorBinder.bind(
-            view.requireViewById(R.id.pager_touch_interceptor),
+            pagerTouchInterceptor,
             customizationPickerViewModel,
             viewLifecycleOwner,
         )
-
-        val previewPager: ClickableMotionLayout = view.requireViewById(R.id.preview_pager)
         previewPager.addClickableViewId(R.id.preview_card)
         when (initialScreen) {
             LOCK_SCREEN -> {
@@ -402,10 +379,46 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
             }
         }
 
-        val lockPreview: View = view.requireViewById(R.id.lock_preview)
-        bindPreview(LOCK_SCREEN, previewPager, lockPreview, isFirstBinding)
-        val homePreview: View = view.requireViewById(R.id.home_preview)
-        bindPreview(HOME_SCREEN, previewPager, homePreview, isFirstBinding)
+        val lockPreviewLabel: TextView = previewPager.requireViewById(R.id.lock_preview_label)
+        PreviewLabelBinder.bind(
+            previewLabel = lockPreviewLabel,
+            screen = LOCK_SCREEN,
+            viewModel = customizationPickerViewModel,
+            lifecycleOwner = viewLifecycleOwner,
+        )
+        ColorUpdateBinder.bind(
+            setColor = { color -> lockPreviewLabel.setTextColor(color) },
+            color = colorUpdateViewModel.colorOnSurface,
+            shouldAnimate = isOnMainScreen,
+            lifecycleOwner = viewLifecycleOwner,
+        )
+        val homePreviewLabel: TextView = previewPager.requireViewById(R.id.home_preview_label)
+        PreviewLabelBinder.bind(
+            previewLabel = homePreviewLabel,
+            screen = HOME_SCREEN,
+            viewModel = customizationPickerViewModel,
+            lifecycleOwner = viewLifecycleOwner,
+        )
+        ColorUpdateBinder.bind(
+            setColor = { color -> homePreviewLabel.setTextColor(color) },
+            color = colorUpdateViewModel.colorOnSurface,
+            shouldAnimate = isOnMainScreen,
+            lifecycleOwner = viewLifecycleOwner,
+        )
+
+        bindPreview(
+            screen = LOCK_SCREEN,
+            previewPager = previewPager,
+            preview = previewPager.requireViewById(R.id.lock_preview),
+            isFirstBinding = isFirstBinding,
+        )
+
+        bindPreview(
+            screen = HOME_SCREEN,
+            previewPager = previewPager,
+            preview = previewPager.requireViewById(R.id.home_preview),
+            isFirstBinding = isFirstBinding,
+        )
     }
 
     private fun bindPreview(
@@ -417,19 +430,6 @@ class CustomizationPickerFragment2 : Hilt_CustomizationPickerFragment2() {
         val appContext = context?.applicationContext ?: return
         val activity = activity ?: return
         val previewViewModel = customizationPickerViewModel.basePreviewViewModel
-
-        val previewLabel: TextView = preview.requireViewById(R.id.preview_label)
-        previewLabel.text =
-            when (screen) {
-                LOCK_SCREEN -> resources.getString(R.string.lock_screen_tab)
-                HOME_SCREEN -> resources.getString(R.string.home_screen_tab)
-            }
-        ColorUpdateBinder.bind(
-            setColor = { color -> previewLabel.setTextColor(color) },
-            color = colorUpdateViewModel.colorOnSurface,
-            shouldAnimate = isOnMainScreen,
-            lifecycleOwner = viewLifecycleOwner,
-        )
 
         val previewCard: View = preview.requireViewById(R.id.preview_card)
 
