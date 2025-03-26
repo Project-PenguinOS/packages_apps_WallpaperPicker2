@@ -17,13 +17,93 @@
 package com.android.wallpaper.testing
 
 import com.android.wallpaper.picker.category.domain.interactor.CuratedPhotosInteractor
+import com.android.wallpaper.picker.data.PhotosErrorData
+import com.android.wallpaper.picker.data.category.CategoryModel
+import com.android.wallpaper.picker.data.category.CollectionCategoryData
+import com.android.wallpaper.picker.data.category.CommonCategoryData
 import com.android.wallpaper.picker.data.category.PhotoCategoryModel
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Singleton
 class FakeCuratedPhotosInteractorImpl @Inject constructor() : CuratedPhotosInteractor {
+    private val _category = MutableStateFlow(threeCuratedPhotos)
+
     override val category: Flow<PhotoCategoryModel>
-        get() = TODO("Not yet implemented")
+        get() = _category
+
+    fun setCategory(newCategory: PhotoCategoryModel) {
+        _category.value = newCategory
+    }
+
+    companion object {
+        val curatedPhotosTitle = "Curated Photos Title"
+        val twoCuratedPhotos =
+            PhotoCategoryModel(
+                CategoryModel(
+                    CommonCategoryData(curatedPhotosTitle, "image_wallpapers", 51),
+                    collectionCategoryData =
+                        CollectionCategoryData(
+                            wallpaperModels =
+                                mutableListOf(
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper1",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper2",
+                                        "collection1",
+                                    ),
+                                ),
+                            thumbAsset = TestAsset(TestStaticWallpaperInfo.COLOR_DEFAULT, false),
+                            featuredThumbnailIndex = 0,
+                            isSingleWallpaperCategory = false,
+                        ),
+                ),
+                PhotosErrorData.OK,
+            )
+
+        val threeCuratedPhotos =
+            PhotoCategoryModel(
+                CategoryModel(
+                    CommonCategoryData(curatedPhotosTitle, "image_wallpapers", 51),
+                    collectionCategoryData =
+                        CollectionCategoryData(
+                            wallpaperModels =
+                                mutableListOf(
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper1",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper2",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper3",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper4",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper5",
+                                        "collection1",
+                                    ),
+                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                        "wallpaper6",
+                                        "collection1",
+                                    ),
+                                ),
+                            thumbAsset = TestAsset(TestStaticWallpaperInfo.COLOR_DEFAULT, false),
+                            featuredThumbnailIndex = 0,
+                            isSingleWallpaperCategory = false,
+                        ),
+                ),
+                PhotosErrorData.OK,
+            )
+    }
 }
