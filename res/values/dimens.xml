@@ -408,6 +408,8 @@
     <!-- Dimensions for the customization picker  -->
     <dimen name="customization_picker_preview_header_collapsed_height">250dp</dimen>
     <dimen name="customization_picker_preview_header_expanded_height">530dp</dimen>
+    <dimen name="customization_picker_min_preview_collapsed_height">70dp</dimen>
+    <dimen name="customization_picker_min_preview_expanded_height">100dp</dimen>
     <dimen name="customization_picker_preview_label_padding_bottom">12dp</dimen>
     <dimen name="customization_picker_preview_bottom_padding">16dp</dimen>
     <dimen name="customization_option_container_horizontal_padding">16dp</dimen>
@@ -467,4 +469,20 @@
 
     <!-- Dimensions for more photos button -->
     <dimen name="more_photos_button_length">154dp</dimen>
+
+    <!-- Dimensions for the photos sign in banner -->
+    <dimen name="sign_in_banner_radius">28dp</dimen>
+    <dimen name="sign_in_banner_padding">16dp</dimen>
+    <dimen name="sign_in_banner_photo_icon_width">48dp</dimen>
+    <dimen name="sign_in_banner_photo_icon_padding">8dp</dimen>
+    <dimen name="sign_in_banner_title_width">0dp</dimen>
+    <dimen name="sign_in_banner_title_margin_horizontal">10dp</dimen>
+    <dimen name="sign_in_banner_title_margin_top">4dp</dimen>
+    <dimen name="sign_in_banner_title_text_size">18sp</dimen>
+    <dimen name="sign_in_banner_description_margin_end">20dp</dimen>
+    <dimen name="sign_in_banner_description_text_size">14sp</dimen>
+    <dimen name="sign_in_banner_dismiss_button_margin_end">8dp</dimen>
+    <dimen name="sign_in_banner_dismiss_button_margin_top">16dp</dimen>
+    <dimen name="sign_in_banner_dismiss_button_margin_bottom">5dp</dimen>
+
 </resources>

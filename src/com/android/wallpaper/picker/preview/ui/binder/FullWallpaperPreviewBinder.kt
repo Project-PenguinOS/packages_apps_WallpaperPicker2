@@ -15,7 +15,6 @@
  */
 package com.android.wallpaper.picker.preview.ui.binder
 
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Point
@@ -25,7 +24,6 @@ import android.view.LayoutInflater
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
-import android.view.accessibility.AccessibilityManager
 import android.widget.FrameLayout
 import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
@@ -100,7 +98,7 @@ object FullWallpaperPreviewBinder {
 
         lifecycleOwner.lifecycleScope.launch {
             lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.fullWallpaper.collect { (wallpaper, _, displaySize, _) ->
+                viewModel.fullWallpaper.collect { (_, _, displaySize, _) ->
                     val currentSize = displayUtils.getRealSize(checkNotNull(view.context.display))
                     wallpaperPreviewCrop.setCurrentAndTargetDisplaySize(currentSize, displaySize)
                     val isPreviewingFullScreen = displaySize == currentSize
@@ -329,19 +327,19 @@ object FullWallpaperPreviewBinder {
                                     applicationContext,
                                     wallpaper,
                                     whichPreview,
-                                    viewModel.getWallpaperPreviewSource().toFlag(),
+                                    config.screen.toFlag(),
                                     surfaceView,
                                     engineRenderingConfig,
                                     isFirstBindingDeferred,
                                 )
-                                if (!isAccessibilityEnabled(applicationContext)) {
+                                if (!viewModel.isAccessibilityEnabled()) {
                                     surfaceTouchForwardingLayout.initTouchForwarding(surfaceView)
                                     surfaceView.setOnTouchListener { _, event ->
                                         lifecycleOwner.lifecycleScope.launch {
                                             wallpaperConnectionUtils.dispatchTouchEvent(
                                                 wallpaper,
                                                 engineRenderingConfig,
-                                                viewModel.getWallpaperPreviewSource().toFlag(),
+                                                config.screen.toFlag(),
                                                 event,
                                             )
                                         }
@@ -426,9 +424,7 @@ object FullWallpaperPreviewBinder {
                                 }
                                 // We do not allow users to pinch to crop if it is a
                                 // downloadable wallpaper.
-                                if (
-                                    allowUserCropping && !isAccessibilityEnabled(applicationContext)
-                                ) {
+                                if (allowUserCropping && !viewModel.isAccessibilityEnabled()) {
                                     surfaceTouchForwardingLayout.initTouchForwarding(
                                         fullResImageView
                                     )
@@ -450,13 +446,6 @@ object FullWallpaperPreviewBinder {
                 // wallpaper services, when going back and forth small and full preview.
             }
         }
-    }
-
-    fun isAccessibilityEnabled(context: Context): Boolean {
-        val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabledServices =
-            am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        return enabledServices.isNotEmpty()
     }
 
     private fun TouchForwardingLayout.initTouchForwarding(targetView: View) {
