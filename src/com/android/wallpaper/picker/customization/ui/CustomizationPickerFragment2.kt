@@ -166,9 +166,14 @@ class CustomizationPickerFragment2 :
             view.requireViewById(R.id.apply_button),
         )
 
-        // TODO(b/412547250): Manage the suggested button by the settings.secure.
+        val showSuggestedChip =
+            Settings.Secure.getInt(
+                view.context.contentResolver,
+                Settings.Secure.SUGGESTED_THEME_FEATURE_ENABLED,
+                /* def= */ 0,
+            ) == 1
         val packThemeSuggestedChip: PackThemeSuggestedChip? =
-            if (BaseFlags.get().isPackThemeEnabled()) {
+            if (BaseFlags.get().isPackThemeEnabled() && showSuggestedChip) {
                 val stubView: ViewStub = view.requireViewById(R.id.stub_pack_theme_suggested_chip)
                 stubView.inflate() as PackThemeSuggestedChip
             } else null
@@ -184,6 +189,7 @@ class CustomizationPickerFragment2 :
             pickerMotionContainer.isInvisible = true
         }
 
+        var isMotionContainerInitialized = false
         val optionContainer: ConstraintLayout =
             view.requireViewById(R.id.customization_option_container)
         val customizationFloatingSheetContainer: FrameLayout =
@@ -199,6 +205,20 @@ class CustomizationPickerFragment2 :
                 statusBarHeight = insets.top,
                 navBarHeight = insets.bottom,
             )
+
+            if (isMotionContainerInitialized) {
+                // Reconfigure motion container constraints if already initialized, to adjust
+                // for new insets (doing it only after it's initialized to avoid jumping if
+                // insets first arrive before the first initialization)
+                configurePickerMotionConstraints(
+                    pickerMotionContainer = pickerMotionContainer,
+                    wallpaperPickerEntry = view.requireViewById(R.id.wallpaper_picker_entry),
+                    previewLabelHeight = view.requireViewById<View>(R.id.label_placeholder).height,
+                    optionContainerHeight = optionContainer.height,
+                    packThemeSuggestedChip = packThemeSuggestedChip,
+                    bottomInset = insets.bottom,
+                )
+            }
             WindowInsetsCompat.CONSUMED
         }
         // Inflate the views of customization options only when options data is ready.
@@ -237,6 +257,7 @@ class CustomizationPickerFragment2 :
                     previewLabelHeight = view.requireViewById<View>(R.id.label_placeholder).height,
                     optionContainerHeight = optionContainer.height,
                     packThemeSuggestedChip = packThemeSuggestedChip,
+                    bottomInset = optionContainer.paddingBottom,
                 )
 
                 if (isInitSecondaryScreen && initSelectedOption != null) {
@@ -271,6 +292,7 @@ class CustomizationPickerFragment2 :
                         packThemeSuggestedChip,
                     )
                 }
+                isMotionContainerInitialized = true
             }
         }
 
@@ -359,6 +381,7 @@ class CustomizationPickerFragment2 :
         previewLabelHeight: Int,
         optionContainerHeight: Int,
         packThemeSuggestedChip: PackThemeSuggestedChip?,
+        bottomInset: Int,
     ) {
         val isLargeScreenSingleDisplayPortrait = displayUtils.isLargeScreenSingleDisplayPortrait()
         val wallpaperPickerEntryExpandedHeight = wallpaperPickerEntry.height
@@ -397,6 +420,7 @@ class CustomizationPickerFragment2 :
         val expandedHeaderHeight =
             (pickerMotionContainer.height -
                     wallpaperPickerEntryExpandedHeight -
+                    bottomInset -
                     resources.getDimensionPixelSize(R.dimen.customization_option_entry_height) / 2)
                 .coerceAtMost(maxExpandedPagerHeight)
                 .coerceAtLeast(minExpandedPagerHeight)
@@ -714,6 +738,7 @@ class CustomizationPickerFragment2 :
             previewPager = previewPagerViews.previewPager,
             preview = previewPagerViews.lockPreview,
             isFirstBinding = isFirstBinding,
+            previewTextLabel = previewPagerViews.lockPreviewLabel,
         )
 
         bindPreview(
@@ -721,6 +746,7 @@ class CustomizationPickerFragment2 :
             previewPager = previewPagerViews.previewPager,
             preview = previewPagerViews.homePreview,
             isFirstBinding = isFirstBinding,
+            previewTextLabel = previewPagerViews.homePreviewLabel,
         )
     }
 
@@ -729,6 +755,7 @@ class CustomizationPickerFragment2 :
         previewPager: ClickableMotionLayout,
         preview: View,
         isFirstBinding: Boolean,
+        previewTextLabel: View? = null,
     ) {
         val appContext = context?.applicationContext ?: return
         val activity = activity ?: return
@@ -786,6 +813,7 @@ class CustomizationPickerFragment2 :
                 customizationPickerViewModel.setPreviewReady(previewScreen, false)
             },
             clockViewFactory = clockViewFactory,
+            previewTextLabel = previewTextLabel,
         )
     }
 
