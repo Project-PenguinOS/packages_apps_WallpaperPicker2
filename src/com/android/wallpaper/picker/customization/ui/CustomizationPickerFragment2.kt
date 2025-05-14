@@ -66,6 +66,7 @@ import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptionsBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationPickerBinder2
+import com.android.wallpaper.picker.customization.ui.binder.DarkModeUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.PackThemeSuggestedEntryBinder
 import com.android.wallpaper.picker.customization.ui.binder.PagerTouchInterceptorBinder
 import com.android.wallpaper.picker.customization.ui.binder.ToolbarBinder
@@ -466,6 +467,9 @@ class CustomizationPickerFragment2 :
                         // sheet content, which can possibly be interrupted by the floating sheet
                         // translating down.
                         customizationPickerViewModel.customizationOptionsViewModel.resetPreview()
+                    } else if (currentId == R.id.secondary) {
+                        customizationPickerViewModel.customizationOptionsViewModel
+                            .onTransitionToSecondaryScreenComplete()
                     }
                 }
             }
@@ -627,6 +631,16 @@ class CustomizationPickerFragment2 :
     private fun setupToolbar(navButton: FrameLayout, toolbar: Toolbar, applyButton: ApplyButton) {
         toolbar.title = getString(R.string.app_name)
         toolbar.setBackgroundColor(Color.TRANSPARENT)
+        DarkModeUpdateBinder.bind(
+            onProgressChange = { progress ->
+                val shouldUseLightText = progress == 1f
+                setUpStatusBar(shouldUseLightText)
+            },
+            colorUpdateViewModel = colorUpdateViewModel,
+            // Status bar text can only be set to light or dark, and cannot be animated
+            shouldAnimate = { false },
+            lifecycleOwner = viewLifecycleOwner,
+        )
         toolbarBinder.bind(
             navButton,
             toolbar,
