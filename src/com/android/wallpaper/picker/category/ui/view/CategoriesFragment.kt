@@ -41,6 +41,7 @@ import com.android.wallpaper.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.ImageWallpaperInfo
 import com.android.wallpaper.module.MultiPanesChecker
+import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.AppbarFragment
 import com.android.wallpaper.picker.MyPhotosStarter
 import com.android.wallpaper.picker.WallpaperPickerDelegate.VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE
@@ -55,6 +56,7 @@ import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewMo
 import com.android.wallpaper.picker.data.WallpaperModel
 import com.android.wallpaper.picker.preview.ui.WallpaperPreviewActivity
 import com.android.wallpaper.util.ActivityUtils
+import com.android.wallpaper.util.CuratedPhotosTimeUtil
 import com.android.wallpaper.util.SizeCalculator
 import com.android.wallpaper.util.converter.WallpaperModelFactory
 import com.google.android.material.appbar.AppBarLayout
@@ -73,6 +75,8 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
     @Inject lateinit var wallpaperModelFactory: WallpaperModelFactory
     @Inject lateinit var colorUpdateViewModel: ColorUpdateViewModel
     @Inject lateinit var bannerProvider: BannerProvider
+    @Inject lateinit var curatedPhotosTimeUtil: CuratedPhotosTimeUtil
+    @Inject lateinit var userEventLogger: UserEventLogger
     private lateinit var photoPickerLauncher: ActivityResultLauncher<Intent>
 
     // TODO: this may need to be scoped to fragment if the architecture changes
@@ -101,13 +105,21 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val view =
-            inflater.inflate(R.layout.categories_fragment, container, /* attachToRoot= */ false)
+        val isNewPickerUi = BaseFlags.get().isNewPickerUi()
 
+        val view =
+            if (isNewPickerUi) {
+                // Inflate categories fragment with new toolbar.
+                inflater.inflate(
+                    R.layout.categories_fragment2,
+                    container,
+                    /* attachToRoot= */ false,
+                )
+            } else {
+                inflater.inflate(R.layout.categories_fragment, container, /* attachToRoot= */ false)
+            }
         setUpToolbar(view)
         setTitle(getText(R.string.wallpaper_title))
-
-        val isNewPickerUi = BaseFlags.get().isNewPickerUi()
 
         val categoriesHeaderImage: ImageView? = view.findViewById(R.id.categories_header_image)
         categoriesHeaderImage?.let { it.isVisible = isNewPickerUi }
@@ -119,9 +131,9 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
                     // AppBarLayout, therefore remove and re-add view to update colors based on new
                     // context
                     val contentParent = view.requireViewById<ViewGroup>(R.id.content_parent)
-                    val appBarLayout = view.requireViewById<AppBarLayout>(R.id.app_bar)
+                    val appBarLayout = contentParent.requireViewById<AppBarLayout>(R.id.app_bar)
                     contentParent.removeView(appBarLayout)
-                    layoutInflater.inflate(R.layout.section_header_content, contentParent, true)
+                    layoutInflater.inflate(R.layout.section_header_content2, contentParent, true)
                     setUpToolbar(view)
                     setTitle(getText(R.string.wallpaper_title))
                     contentParent.requestApplyInsets()
@@ -138,6 +150,8 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
             windowWidth = SizeCalculator.getActivityWindowWidthPx(this.activity),
             colorUpdateViewModel = colorUpdateViewModel,
             shouldAnimateColor = { false },
+            curatedPhotosTimeUtil = curatedPhotosTimeUtil,
+            userEventLogger = userEventLogger,
             bannerProvider = bannerProvider,
             lifecycleOwner = viewLifecycleOwner,
         ) { navigationEvent, callback ->

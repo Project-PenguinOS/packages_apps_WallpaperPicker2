@@ -16,28 +16,45 @@
 
 package com.android.wallpaper.picker.category.ui.view.viewholder
 
+import android.app.WallpaperColors
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.android.wallpaper.R
+import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.category.ui.viewmodel.TileViewModel
 import com.android.wallpaper.picker.customization.animation.view.LoadingAnimation2
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
+import com.android.wallpaper.util.CuratedPhotosTimeUtil
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class CuratedPhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+class CuratedPhotoHolder(
+    itemView: View,
+    private val curatedPhotosTimeUtil: CuratedPhotosTimeUtil,
+    private val userEventLogger: UserEventLogger,
+) : RecyclerView.ViewHolder(itemView) {
 
     var backgroundColorBinding: ColorUpdateBinder.Binding? = null
     var loadingAnimation: LoadingAnimation2? = null
     private val curatedPhotoImage: ImageView = itemView.requireViewById(R.id.carousel_image_view)
     private val curatedPhotoTitle: TextView = itemView.requireViewById(R.id.carousel_text_view)
+
+    private var bindJob: Job? = null
 
     fun bind(item: TileViewModel, context: Context, isFirst: Boolean) {
         curatedPhotoImage.contentDescription = item.contentDescription
@@ -47,6 +64,9 @@ class CuratedPhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
                 curatedPhotoImage,
                 context.resources.getInteger(android.R.integer.config_mediumAnimTime),
                 {
+                    val startTime = curatedPhotosTimeUtil.getStartTime()
+                    val timeMilliseconds = System.currentTimeMillis() - startTime
+                    userEventLogger.logCuratedPhotosRendered(timeMilliseconds, true)
                     loadingAnimation?.playRevealAnimation {
                         loadingAnimation = null
                         backgroundColorBinding?.destroy()
@@ -55,6 +75,29 @@ class CuratedPhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
                 },
                 context.getColor(R.color.system_surface_bright),
             )
+
+            if (item.showTitle) {
+                asset.decodeBitmap { bitmap ->
+                    if (bitmap != null) {
+                        val safeBitmap =
+                            if (bitmap.config == Bitmap.Config.HARDWARE) {
+                                bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                            } else {
+                                bitmap
+                            }
+                        bindJob =
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val colors = WallpaperColors.fromBitmap(safeBitmap)
+                                withContext(Dispatchers.Main) {
+                                    val backgroundColor =
+                                        colors?.primaryColor?.toArgb() ?: Color.DKGRAY
+                                    val textColor = getContrastingTextColor(backgroundColor)
+                                    curatedPhotoTitle.setTextColor(textColor)
+                                }
+                            }
+                    }
+                }
+            }
         }
             ?: run {
                 // Glide will render the gif and on completion or failure will dismiss the
@@ -70,11 +113,19 @@ class CuratedPhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
                                 dataSource: DataSource,
                                 isFirstResource: Boolean,
                             ): Boolean {
+                                val startTime = curatedPhotosTimeUtil.getStartTime()
+                                val timeMilliseconds = System.currentTimeMillis() - startTime
+                                userEventLogger.logCuratedPhotosRendered(timeMilliseconds, false)
                                 loadingAnimation?.playRevealAnimation {
                                     loadingAnimation = null
                                     backgroundColorBinding?.destroy()
                                     backgroundColorBinding = null
                                 }
+
+                                val colors = WallpaperColors.fromDrawable(resource)
+                                val backgroundColor = colors?.primaryColor?.toArgb() ?: Color.DKGRAY
+                                val textColor = getContrastingTextColor(backgroundColor)
+                                curatedPhotoTitle.setTextColor(textColor)
                                 return false
                             }
 
@@ -110,10 +161,24 @@ class CuratedPhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         itemView.setOnClickListener { _ -> item.onClicked?.invoke() }
     }
 
+    fun getContrastingTextColor(backgroundColor: Int): Int {
+        // Calculate luminance (brightness) of the background color
+        val luminance = ColorUtils.calculateLuminance(backgroundColor)
+        return if (luminance > 0.5) {
+            Color.BLACK // background is light, so use dark text
+        } else {
+            Color.WHITE // background is dark, so use light text
+        }
+    }
+
     fun cleanUp() {
         backgroundColorBinding?.destroy()
         backgroundColorBinding = null
         loadingAnimation?.cancel()
         loadingAnimation = null
+    }
+
+    fun recycle() {
+        bindJob?.cancel()
     }
 }

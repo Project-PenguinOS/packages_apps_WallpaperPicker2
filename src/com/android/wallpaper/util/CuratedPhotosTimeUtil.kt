@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package com.android.wallpaper.picker.data.category
+package com.android.wallpaper.util
 
-import android.app.PendingIntent
-import com.android.wallpaper.picker.data.PhotosErrorData
+import javax.inject.Inject
+import javax.inject.Singleton
 
-/**
- * This is a wrapper class around photos category since we also need to take into account
- * 1. status: Different status code returned by the PhotosClient API
- * 2. pendingIntent: Intent that allows user to sign in to GooglePhotos
- */
-data class PhotoCategoryModel(
-    val categoryModel: CategoryModel,
-    val status: PhotosErrorData,
-    val pendingIntent: PendingIntent?,
-)
+@Singleton
+class CuratedPhotosTimeUtil @Inject constructor() {
+
+    private var startTime = 0L
+
+    /** This method returns the current time in case start time is not set to 0. */
+    fun getStartTime(): Long {
+        return if (startTime != 0L) startTime else System.currentTimeMillis()
+    }
+
+    /** This method sets the start time when fetching of curated photos starts. */
+    fun setStartTime(fetchStartTime: Long) {
+        this.startTime = fetchStartTime
+    }
+}

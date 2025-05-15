@@ -66,6 +66,7 @@ import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptionsBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationPickerBinder2
+import com.android.wallpaper.picker.customization.ui.binder.DarkModeUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.PackThemeSuggestedEntryBinder
 import com.android.wallpaper.picker.customization.ui.binder.PagerTouchInterceptorBinder
 import com.android.wallpaper.picker.customization.ui.binder.ToolbarBinder
@@ -84,6 +85,7 @@ import com.android.wallpaper.picker.di.modules.MainDispatcher
 import com.android.wallpaper.picker.preview.ui.WallpaperPreviewActivity
 import com.android.wallpaper.picker.preview.ui.view.ClickableMotionLayout
 import com.android.wallpaper.util.ActivityUtils
+import com.android.wallpaper.util.CuratedPhotosTimeUtil
 import com.android.wallpaper.util.DisplayUtils
 import com.android.wallpaper.util.WallpaperConnection
 import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils
@@ -112,6 +114,7 @@ class CustomizationPickerFragment2 :
     @Inject lateinit var multiPanesChecker: MultiPanesChecker
     @Inject lateinit var individualPickerFactory: IndividualPickerFactory
     @Inject lateinit var userEventLogger: UserEventLogger
+    @Inject lateinit var curatedPhotosTimeUtil: CuratedPhotosTimeUtil
 
     private val customizationPickerViewModel: CustomizationPickerViewModel2 by viewModels()
 
@@ -448,7 +451,7 @@ class CustomizationPickerFragment2 :
                         // isLargeScreenSingleDisplayPortrait is true
                         if (!isLargeScreenSingleDisplayPortrait) {
                             wallpaperPickerEntry.animateToCollapsed()
-                            packThemeSuggestedChip?.animateToCollapsed()
+                            packThemeSuggestedChip?.animateToCollapsed({})
                         }
                     }
 
@@ -466,6 +469,9 @@ class CustomizationPickerFragment2 :
                         // sheet content, which can possibly be interrupted by the floating sheet
                         // translating down.
                         customizationPickerViewModel.customizationOptionsViewModel.resetPreview()
+                    } else if (currentId == R.id.secondary) {
+                        customizationPickerViewModel.customizationOptionsViewModel
+                            .onTransitionToSecondaryScreenComplete()
                     }
                 }
             }
@@ -572,6 +578,8 @@ class CustomizationPickerFragment2 :
             },
             packThemeSuggestedChip = packThemeSuggestedChip,
             packThemeSuggestedEntryBinder = packThemeSuggestedEntryBinder,
+            curatedPhotosTimeUtil = curatedPhotosTimeUtil,
+            userEventLogger = userEventLogger,
         )
 
         customizationOptionsBinder.bindDiscardChangesDialog(
@@ -627,6 +635,16 @@ class CustomizationPickerFragment2 :
     private fun setupToolbar(navButton: FrameLayout, toolbar: Toolbar, applyButton: ApplyButton) {
         toolbar.title = getString(R.string.app_name)
         toolbar.setBackgroundColor(Color.TRANSPARENT)
+        DarkModeUpdateBinder.bind(
+            onProgressChange = { progress ->
+                val shouldUseLightText = progress == 1f
+                setUpStatusBar(shouldUseLightText)
+            },
+            colorUpdateViewModel = colorUpdateViewModel,
+            // Status bar text can only be set to light or dark, and cannot be animated
+            shouldAnimate = { false },
+            lifecycleOwner = viewLifecycleOwner,
+        )
         toolbarBinder.bind(
             navButton,
             toolbar,
