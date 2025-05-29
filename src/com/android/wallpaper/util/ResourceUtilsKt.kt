@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package com.android.wallpaper.picker.customization.ui.view
+package com.android.wallpaper.util
 
-import android.view.View
-import android.widget.TextView
-import com.android.wallpaper.picker.preview.ui.view.ClickableMotionLayout
+import android.content.Context
 
-data class PreviewPagerViews(
-    val previewPager: ClickableMotionLayout,
-    val lockPreviewLabel: TextView,
-    val homePreviewLabel: TextView,
-    val lockPreview: View,
-    val homePreview: View,
-    val lockPreviewShade: View,
-    val homePreviewShade: View,
-    val clockHostView: View?,
-    val clockFaceClickDelegateView: View?,
-)
+/** A set of common resource utilities. */
+object ResourceUtilsKt {
+
+    /** * Returns the default color for a given attribute. */
+    fun getColorAttr(context: Context, attr: Int): Int? {
+        val typedArray = context.obtainStyledAttributes(intArrayOf(attr))
+        val stateList =
+            try {
+                typedArray.getColorStateList(0)
+            } finally {
+                typedArray.recycle()
+            }
+
+        return stateList?.defaultColor
+    }
+}

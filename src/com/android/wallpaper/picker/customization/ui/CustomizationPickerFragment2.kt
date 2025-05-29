@@ -68,7 +68,7 @@ import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptions
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationPickerBinder2
 import com.android.wallpaper.picker.customization.ui.binder.DarkModeUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.PackThemeSuggestedEntryBinder
-import com.android.wallpaper.picker.customization.ui.binder.PagerTouchInterceptorBinder
+import com.android.wallpaper.picker.customization.ui.binder.PreviewPagerBinder
 import com.android.wallpaper.picker.customization.ui.binder.ToolbarBinder
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionUtil.CustomizationOption
@@ -180,6 +180,7 @@ class CustomizationPickerFragment2 :
                 val stubView: ViewStub = view.requireViewById(R.id.stub_pack_theme_suggested_chip)
                 stubView.inflate() as PackThemeSuggestedChip
             } else null
+        packThemeSuggestedChip?.visibility = View.INVISIBLE
 
         val pickerMotionContainer: MotionLayout = view.requireViewById(R.id.picker_motion_layout)
 
@@ -312,6 +313,7 @@ class CustomizationPickerFragment2 :
         val previewPagerViews: PreviewPagerViews =
             initPreviewPager(rootView = view, previewPager = previewPager)
         bindPreviewPager(
+            rootView = view,
             previewPagerViews = previewPagerViews,
             isFirstBinding = savedInstanceState == null,
         )
@@ -396,6 +398,8 @@ class CustomizationPickerFragment2 :
             resources.getDimensionPixelSize(
                 R.dimen.customization_picker_min_preview_collapsed_height
             )
+        wallpaperPickerEntry.configureForAnimation()
+
         val minCollapsedPagerHeight = minCollapsedPreviewHeight + previewLabelHeight
         val minExpandedPreviewHeight =
             resources.getDimensionPixelSize(
@@ -689,7 +693,6 @@ class CustomizationPickerFragment2 :
 
         return PreviewPagerViews(
             previewPager = previewPager,
-            pagerTouchInterceptor = rootView.requireViewById(R.id.pager_touch_interceptor),
             lockPreviewLabel = previewPager.requireViewById(R.id.lock_preview_label),
             homePreviewLabel = previewPager.requireViewById(R.id.home_preview_label),
             lockPreview = previewPager.requireViewById(R.id.lock_preview),
@@ -701,12 +704,12 @@ class CustomizationPickerFragment2 :
         )
     }
 
-    private fun bindPreviewPager(previewPagerViews: PreviewPagerViews, isFirstBinding: Boolean) {
-        PagerTouchInterceptorBinder.bind(
-            previewPagerViews.pagerTouchInterceptor,
-            customizationPickerViewModel,
-            viewLifecycleOwner,
-        )
+    private fun bindPreviewPager(
+        rootView: View,
+        previewPagerViews: PreviewPagerViews,
+        isFirstBinding: Boolean,
+    ) {
+        PreviewPagerBinder.bind(previewPagerViews, customizationPickerViewModel, viewLifecycleOwner)
 
         ColorUpdateBinder.bind(
             setColor = { color -> previewPagerViews.lockPreviewLabel.setTextColor(color) },
@@ -742,6 +745,7 @@ class CustomizationPickerFragment2 :
         if (clockHostView != null && clockFaceClickDelegateView != null) {
             customizationOptionsBinder.bindClockPreview(
                 context = requireContext(),
+                rootView = rootView,
                 clockHostView = clockHostView,
                 clockFaceClickDelegateView = clockFaceClickDelegateView,
                 viewModel = customizationPickerViewModel,

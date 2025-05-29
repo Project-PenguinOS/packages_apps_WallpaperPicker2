@@ -105,9 +105,9 @@ constructor(
     val lockPreviewLabelTextAppearance: Flow<Int> =
         selectedPreviewScreen.map {
             if (it == LOCK_SCREEN) {
-                R.style.TextAppearance_DeviceDefault_Small_TitleMediumEmphasized
+                R.style.TextAppearance_Preview_Label_Selected
             } else {
-                R.style.TextAppearance_DeviceDefault_Small_TitleMedium
+                R.style.TextAppearance_Preview_Label_Unselected
             }
         }
 
@@ -131,9 +131,9 @@ constructor(
     val homePreviewLabelTextAppearance: Flow<Int> =
         selectedPreviewScreen.map {
             if (it == HOME_SCREEN) {
-                R.style.TextAppearance_DeviceDefault_Small_TitleMediumEmphasized
+                R.style.TextAppearance_Preview_Label_Selected
             } else {
-                R.style.TextAppearance_DeviceDefault_Small_TitleMedium
+                R.style.TextAppearance_Preview_Label_Unselected
             }
         }
 
@@ -168,10 +168,15 @@ constructor(
         }
     }
 
-    val isPreviewClickable: Flow<Boolean> = basePreviewViewModel.wallpapers.map { it != null }
-
     val isPagerInteractable: Flow<Boolean> =
         customizationOptionsViewModel.selectedOption.map { it == null }
+
+    val isPreviewClickable: Flow<Boolean> =
+        combine(basePreviewViewModel.wallpapers, isPagerInteractable) {
+            wallpapers,
+            isPagerInteractable ->
+            wallpapers != null && isPagerInteractable
+        }
 
     companion object {
         const val PREVIEW_SHOW_ALPHA = 1F
