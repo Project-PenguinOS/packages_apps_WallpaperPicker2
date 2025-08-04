@@ -18,7 +18,6 @@ package com.android.wallpaper.config
 import android.app.Flags.updateRecentsFromSystem
 import android.app.WallpaperManager
 import android.content.Context
-import com.android.settings.accessibility.Flags.enableColorContrastControl
 import com.android.systemui.shared.Flags.clockReactiveVariants
 import com.android.systemui.shared.Flags.extendedWallpaperEffects
 import com.android.systemui.shared.Flags.extendibleThemeManager
@@ -36,7 +35,6 @@ import com.android.wallpaper.Flags.enablePackThemeEntry
 import com.android.wallpaper.Flags.fullscreenPreviewFlag
 import com.android.wallpaper.Flags.newCreativeWallpaperCategory
 import com.android.wallpaper.Flags.refactorIndividualPickerFlag
-import com.android.wallpaper.Flags.refactorWallpaperCategoryFlag
 import com.android.wallpaper.Flags.refactorWallpaperPreviewScreenFlag
 import com.android.wallpaper.Flags.wallpaperRestorerFlag
 import com.android.wallpaper.R
@@ -54,8 +52,6 @@ abstract class BaseFlags {
 
     open fun isStagingBackdropContentEnabled() = false
 
-    open fun isWallpaperEffectEnabled() = false
-
     open fun isPackThemeEnabled() = enablePackThemeEntry()
 
     open fun isWallpaperEffectModelDownloadEnabled() = true
@@ -67,14 +63,10 @@ abstract class BaseFlags {
 
     open fun isWallpaperRestorerEnabled() = wallpaperRestorerFlag()
 
-    open fun isWallpaperCategoryRefactoringEnabled() = refactorWallpaperCategoryFlag()
-
     open fun isNewCreativeWallpaperCategoryEnabled() = newCreativeWallpaperCategory()
 
     open fun isCreativeWallpaperCollectionFieldEnabled() =
         creativeWallpaperFieldCollectionWallpaper()
-
-    open fun isColorContrastControlEnabled() = enableColorContrastControl()
 
     open fun isExtendedWallpaperEnabled() = extendedWallpaperEffects()
 
