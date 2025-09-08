@@ -76,11 +76,12 @@ abstract class BaseFlags {
 
     open fun isClockReactiveVariantsEnabled() = clockReactiveVariants()
 
-    open fun isMultiCropEnabled() = WallpaperManager.isMultiCropEnabled()
-
     open fun isComposeRefactorEnabled() = composeRefactorFlag()
 
     open fun isColorPickerUpdateEnabled() = colorPickerUpdateFlag()
+
+    // Local flag to gate Compose UI under the colorPickerUpdateFlag
+    open fun isColorPickerComposeEnabled() = false
 
     open fun isAdaptiveWallpaperEnabled() = adaptiveWallpaperFlag()
 
