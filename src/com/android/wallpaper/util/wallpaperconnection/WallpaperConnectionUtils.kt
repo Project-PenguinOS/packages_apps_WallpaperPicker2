@@ -109,6 +109,7 @@ constructor(
         disconnectOnWallpaperChange: Boolean,
         totalEngineNum: Int = 1,
         listener: WallpaperEngineConnection.WallpaperEngineConnectionListener? = null,
+        signalConfigChange: Boolean = false,
         onPreviewReady: (() -> Unit)? = null,
     ) {
         this.disconnectOnWallpaperChange = disconnectOnWallpaperChange
@@ -149,6 +150,10 @@ constructor(
                 }
             }
 
+            val isConfigChange = signalConfigChange && !isFirstBindingDeferred.await()
+
+            if (debug) Log.d(TAG, "isConfigChange: $isConfigChange")
+
             if (!wallpaperConnectionMap.containsKey(engineKey)) {
                 mutex.withLock {
                     if (!wallpaperConnectionMap.containsKey(engineKey)) {
@@ -163,6 +168,7 @@ constructor(
                                     surfaceView,
                                     listener,
                                     wallpaperModel.liveWallpaperData.description,
+                                    isConfigChange,
                                     this@WallpaperConnectionUtils,
                                     shortKey,
                                 )
@@ -377,6 +383,7 @@ constructor(
         surfaceView: SurfaceView,
         listener: WallpaperEngineConnection.WallpaperEngineConnectionListener?,
         description: WallpaperDescription,
+        isConfigChange: Boolean,
         owner: WallpaperConnectionUtils? = null,
         shortKey: String = "",
     ): WallpaperConnection {
@@ -399,6 +406,8 @@ constructor(
                     connection.disconnect(context)
                 }
             }
+        if (isConfigChange) description.content.apply { putBoolean(IS_CONFIG_CHANGE, true) }
+
         // Attach wallpaper connection to service and get wallpaper engine
         engineConnection
             .getEngine(wallpaperService, destinationFlag, surfaceView, description)
@@ -639,6 +648,7 @@ constructor(
 
     companion object {
         private const val TAG = "WallpaperConnectionUtils"
+        private const val IS_CONFIG_CHANGE = "_picker_isConfigChange"
 
         data class EngineRenderingConfig(
             val enforceSingleEngine: Boolean,
