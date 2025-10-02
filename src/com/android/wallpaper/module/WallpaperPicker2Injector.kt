@@ -19,7 +19,6 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.ComponentActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.android.wallpaper.config.BaseFlags
@@ -29,7 +28,6 @@ import com.android.wallpaper.model.InlinePreviewIntentFactory
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.monitor.PerformanceMonitor
 import com.android.wallpaper.network.Requester
-import com.android.wallpaper.picker.CustomizationPickerActivity
 import com.android.wallpaper.picker.MyPhotosStarter
 import com.android.wallpaper.picker.PreviewActivity
 import com.android.wallpaper.picker.ViewOnlyPreviewActivity
@@ -38,6 +36,7 @@ import com.android.wallpaper.picker.customization.data.content.WallpaperClient
 import com.android.wallpaper.picker.customization.data.repository.WallpaperColorsRepository
 import com.android.wallpaper.picker.customization.domain.interactor.WallpaperInteractor
 import com.android.wallpaper.picker.customization.domain.interactor.WallpaperSnapshotRestorer
+import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity2
 import com.android.wallpaper.picker.di.modules.MainDispatcher
 import com.android.wallpaper.picker.individual.IndividualPickerFragment2
 import com.android.wallpaper.picker.undo.data.repository.UndoRepository
@@ -72,7 +71,6 @@ constructor(
     private var bitmapCropper: BitmapCropper? = null
     private var categoryProvider: CategoryProvider? = null
     private var currentWallpaperFactory: CurrentWallpaperInfoFactory? = null
-    private var customizationSections: CustomizationSections? = null
     private var drawableLayerResolver: DrawableLayerResolver? = null
     private var exploreIntentChecker: ExploreIntentChecker? = null
     private var liveWallpaperInfoFactory: LiveWallpaperInfoFactory? = null
@@ -125,14 +123,9 @@ constructor(
                 .also { currentWallpaperFactory = it }
     }
 
-    override fun getCustomizationSections(activity: ComponentActivity): CustomizationSections {
-        return customizationSections
-            ?: WallpaperPickerSections().also { customizationSections = it }
-    }
-
     override fun getDeepLinkRedirectIntent(context: Context, uri: Uri): Intent {
         val intent = Intent()
-        intent.setClass(context, CustomizationPickerActivity::class.java)
+        intent.setClass(context, CustomizationPickerActivity2::class.java)
         intent.data = uri
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         return intent
