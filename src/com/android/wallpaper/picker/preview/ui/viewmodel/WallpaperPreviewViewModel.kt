@@ -29,6 +29,7 @@ import com.android.systemui.shared.Flags
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.Screen
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType
+import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.BasePreviewActivity.EXTRA_VIEW_AS_HOME
 import com.android.wallpaper.picker.customization.shared.model.WallpaperColorsModel
 import com.android.wallpaper.picker.customization.shared.model.WallpaperDestination
@@ -112,6 +113,13 @@ constructor(
 
     fun setPreviewWallpaperModel(wallpaperModel: WallpaperModel) {
         interactor.setPreviewWallpaper(wallpaperModel)
+    }
+
+    @UserEventLogger.SetWallpaperEntryPoint
+    var wallpaperEntryPoint: Int = StyleEnums.SET_WALLPAPER_ENTRY_POINT_WALLPAPER_PREVIEW
+
+    fun setWallpaperEntryPointValue(setWallpaperEntryPoint: Int) {
+        this.wallpaperEntryPoint = setWallpaperEntryPoint
     }
 
     // Used to display loading indication on the preview.
@@ -497,7 +505,7 @@ constructor(
             (enabledSet, dest) ->
             if (enabledSet) {
                 {
-                    val screens = dest?.toScreens() ?: setOf(smallPreviewSelectedTab.value)
+                    val screens = dest?.toScreens() ?: WallpaperDestination.BOTH.toScreens()
                     initSetWallpaperDialogScreenSelected(screens)
                     setApplyWallpaperPreviewSelectedTab(smallPreviewSelectedTab.value)
                     _currentPreviewScreen.value = PreviewScreen.APPLY_WALLPAPER
@@ -523,8 +531,7 @@ constructor(
                     is StaticWallpaperModel ->
                         fullResWallpaperViewModel?.let {
                             interactor.setStaticWallpaper(
-                                setWallpaperEntryPoint =
-                                    StyleEnums.SET_WALLPAPER_ENTRY_POINT_WALLPAPER_PREVIEW,
+                                setWallpaperEntryPoint = wallpaperEntryPoint,
                                 destination = destination,
                                 wallpaperModel = wallpaper,
                                 bitmap = it.rawWallpaperBitmap,
@@ -540,8 +547,7 @@ constructor(
                         }
                     is LiveWallpaperModel -> {
                         interactor.setLiveWallpaper(
-                            setWallpaperEntryPoint =
-                                StyleEnums.SET_WALLPAPER_ENTRY_POINT_WALLPAPER_PREVIEW,
+                            setWallpaperEntryPoint = wallpaperEntryPoint,
                             destination = destination,
                             wallpaperModel = wallpaper,
                         )

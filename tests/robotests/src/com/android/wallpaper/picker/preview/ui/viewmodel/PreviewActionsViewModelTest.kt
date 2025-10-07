@@ -40,6 +40,7 @@ import com.android.wallpaper.picker.preview.domain.interactor.PreviewActionsInte
 import com.android.wallpaper.picker.preview.domain.interactor.WallpaperPreviewInteractor
 import com.android.wallpaper.picker.preview.shared.model.ImageEffectsModel
 import com.android.wallpaper.picker.preview.ui.util.LiveWallpaperDeleteUtil
+import com.android.wallpaper.testing.FakeExtendedEffectsHelper
 import com.android.wallpaper.testing.FakeImageEffectsRepository
 import com.android.wallpaper.testing.FakeLiveWallpaperDownloader
 import com.android.wallpaper.testing.ShadowWallpaperInfo
@@ -136,6 +137,7 @@ class PreviewActionsViewModelTest {
                 activityScopeEntryPoint.wallpaperConnectionUtils(),
                 activityScopeEntryPoint.interactor(),
                 liveWallpaperDeleteUtil,
+                FakeExtendedEffectsHelper(),
                 appContext,
                 TestScope(testDispatcher),
             )
@@ -160,6 +162,16 @@ class PreviewActionsViewModelTest {
 
         val isInformationButtonVisible = collectLastValue(underTest.isInformationVisible)
         assertThat(isInformationButtonVisible()).isTrue()
+    }
+
+    @Test
+    fun isInformationVisible_invisibleWhenHideInformationSheetIsTrue() = runTest {
+        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        wallpaperPreviewRepository.setWallpaperModel(model)
+        underTest.hideInformationFloatingSheet.value = true
+
+        val isInformationButtonVisible = collectLastValue(underTest.isInformationVisible)
+        assertThat(isInformationButtonVisible()).isFalse()
     }
 
     @Test

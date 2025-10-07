@@ -21,7 +21,6 @@ import android.view.SurfaceView
 import android.view.View
 import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
-import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -46,6 +45,12 @@ import kotlinx.coroutines.launch
 
 object SmallPreviewBinder {
 
+    interface Binding {
+        fun showSurfaces()
+
+        fun hideSurfaces()
+    }
+
     // TODO(b/339081035): Remove null case for isFoldable with the flag
     fun bind(
         applicationContext: Context,
@@ -66,7 +71,7 @@ object SmallPreviewBinder {
         onStartTransition: (() -> Unit)? = null,
         onPreviewSurfaceDestroyed: ((Screen) -> Unit)? = null,
         isFoldable: Boolean? = null,
-    ) {
+    ): Binding {
 
         val previewCard: CardView = view.requireViewById(R.id.preview_card)
         val foldedStateDescription =
@@ -166,8 +171,8 @@ object SmallPreviewBinder {
                         } else {
                             // If transitioning to another small preview, keep child surfaces hidden
                             // until transition ends.
-                            wallpaperSurface.isVisible = false
-                            workspaceSurface.isVisible = false
+                            wallpaperSurface.visibility = View.INVISIBLE
+                            workspaceSurface.visibility = View.INVISIBLE
                         }
                     }
 
@@ -180,8 +185,8 @@ object SmallPreviewBinder {
                             wallpaperSurface.setZOrderMediaOverlay(true)
                             workspaceSurface.setZOrderMediaOverlay(true)
                         } else {
-                            wallpaperSurface.isVisible = true
-                            workspaceSurface.isVisible = true
+                            wallpaperSurface.visibility = View.VISIBLE
+                            workspaceSurface.visibility = View.VISIBLE
                             wallpaperSurface.alpha = 0f
                             workspaceSurface.alpha = 0f
 
@@ -202,6 +207,8 @@ object SmallPreviewBinder {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 transitionListener?.let {
                     // If transitionListener is not null so do transition and transitionConfig
+                    wallpaperSurface.visibility = View.VISIBLE
+                    workspaceSurface.visibility = View.VISIBLE
                     transition!!.addListener(it)
                     transitionDisposableHandle = DisposableHandle { transition.removeListener(it) }
                 }
@@ -254,22 +261,36 @@ object SmallPreviewBinder {
         val config = viewModel.getWorkspacePreviewConfig(screen, deviceDisplayType)
         WorkspacePreviewBinder.bind(workspaceSurface, config, viewModel, viewLifecycleOwner)
 
-        SmallWallpaperPreviewBinder.bind(
-            surface = wallpaperSurface,
-            viewModel = viewModel,
-            screen = screen,
-            displaySize = displaySize,
-            applicationContext = applicationContext,
-            mainScope = mainScope,
-            viewLifecycleOwner = viewLifecycleOwner,
-            deviceDisplayType = deviceDisplayType,
-            wallpaperConnectionUtils = wallpaperConnectionUtils,
-            isFirstBindingDeferred = isFirstBindingDeferred,
-            onPreviewReady = onPreviewReady,
-            onStartTransition = onStartTransition,
-            onPreviewSurfaceDestroyed = onPreviewSurfaceDestroyed,
-            isFoldable = isFoldable,
-        )
+        val binding =
+            SmallWallpaperPreviewBinder.bind(
+                surface = wallpaperSurface,
+                viewModel = viewModel,
+                screen = screen,
+                displaySize = displaySize,
+                applicationContext = applicationContext,
+                mainScope = mainScope,
+                viewLifecycleOwner = viewLifecycleOwner,
+                deviceDisplayType = deviceDisplayType,
+                wallpaperConnectionUtils = wallpaperConnectionUtils,
+                isFirstBindingDeferred = isFirstBindingDeferred,
+                onPreviewReady = onPreviewReady,
+                onStartTransition = onStartTransition,
+                onPreviewSurfaceDestroyed = onPreviewSurfaceDestroyed,
+                isFoldable = isFoldable,
+            )
+
+        return object : Binding {
+            override fun showSurfaces() {
+                wallpaperSurface.visibility = View.VISIBLE
+                workspaceSurface.visibility = View.VISIBLE
+            }
+
+            override fun hideSurfaces() {
+                wallpaperSurface.visibility = View.INVISIBLE
+                workspaceSurface.visibility = View.INVISIBLE
+                binding.destroy()
+            }
+        }
     }
 
     private fun SurfaceView.startFadeInAnimation(duration: Long) {
