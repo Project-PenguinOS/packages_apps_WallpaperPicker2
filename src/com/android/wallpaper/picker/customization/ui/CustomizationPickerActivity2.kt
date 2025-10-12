@@ -30,6 +30,8 @@ import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentManager
 import com.android.customization.picker.clock.ui.view.ClockViewFactory
 import com.android.wallpaper.R
+import com.android.wallpaper.config.BaseFlags
+import com.android.wallpaper.module.DailyLoggingAlarmScheduler
 import com.android.wallpaper.module.MultiPanesChecker
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.AppbarFragment
@@ -37,7 +39,6 @@ import com.android.wallpaper.picker.category.ui.viewmodel.CategoriesViewModel
 import com.android.wallpaper.picker.common.preview.data.repository.PersistentWallpaperModelRepository
 import com.android.wallpaper.picker.common.preview.ui.binder.WorkspaceCallbackBinder
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
-import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptionsBinder
 import com.android.wallpaper.picker.customization.ui.binder.ToolbarBinder
 import com.android.wallpaper.picker.customization.ui.util.CustomizationOptionViewUtil
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
@@ -67,7 +68,6 @@ class CustomizationPickerActivity2 :
 
     @Inject lateinit var multiPanesChecker: MultiPanesChecker
     @Inject lateinit var customizationOptionViewUtil: CustomizationOptionViewUtil
-    @Inject lateinit var customizationOptionsBinder: CustomizationOptionsBinder
     @Inject lateinit var workspaceCallbackBinder: WorkspaceCallbackBinder
     @Inject lateinit var toolbarBinder: ToolbarBinder
     @Inject lateinit var wallpaperModelFactory: WallpaperModelFactory
@@ -86,6 +86,8 @@ class CustomizationPickerActivity2 :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        DailyLoggingAlarmScheduler.setAlarm(applicationContext)
 
         if (intent != null) {
             logger.logAppLaunched(intent)
@@ -185,7 +187,8 @@ class CustomizationPickerActivity2 :
     }
 
     override fun isUpArrowSupported(): Boolean {
-        return !ActivityUtils.isSUWMode(baseContext)
+        return BaseFlags.get().shouldShowDesktopUi(baseContext) ||
+            !ActivityUtils.isSUWMode(baseContext)
     }
 
     @TargetApi(36)
