@@ -15,8 +15,6 @@
  */
 package com.android.wallpaper.config
 
-import android.app.Flags.updateRecentsFromSystem
-import android.app.WallpaperManager
 import android.content.Context
 import com.android.systemui.shared.Flags.extendedWallpaperEffects
 import com.android.systemui.shared.Flags.extendibleThemeManager
@@ -31,7 +29,6 @@ import com.android.wallpaper.Flags.desktopUiFlag
 import com.android.wallpaper.Flags.enablePackThemeEntry
 import com.android.wallpaper.Flags.fullscreenPreviewFlag
 import com.android.wallpaper.Flags.newCreativeWallpaperCategory
-import com.android.wallpaper.Flags.photoShuffleFlag
 import com.android.wallpaper.Flags.refactorIndividualPickerFlag
 import com.android.wallpaper.Flags.refactorWallpaperInfoFlag
 import com.android.wallpaper.Flags.refactorWallpaperPreviewScreenFlag
@@ -81,8 +78,6 @@ abstract class BaseFlags {
     open fun isAdaptiveWallpaperEnabled() = adaptiveWallpaperFlag()
 
     open fun isRefactorWallpaperPreviewScreenEnabled() = refactorWallpaperPreviewScreenFlag()
-
-    open fun isPhotoShuffleEnabled() = photoShuffleFlag()
 
     open fun isRefactorWallpaperInfoFlag() = refactorWallpaperInfoFlag()
 
@@ -142,19 +137,6 @@ abstract class BaseFlags {
 
     open fun isFullscreenPreviewEnabled(context: Context): Boolean {
         return fullscreenPreviewFlag() && DesktopState.fromContext(context).canEnterDesktopMode
-    }
-
-    open fun isRecentWallpapersFromSystemEnabled(context: Context): Boolean {
-        val wallpaperManager = context.getSystemService(WallpaperManager::class.java)
-        try {
-            wallpaperManager.javaClass.getMethod(
-                "getWallpaperInstance",
-                Int::class.javaPrimitiveType,
-            )
-            return updateRecentsFromSystem()
-        } catch (e: NoSuchMethodException) {
-            return false
-        }
     }
 
     open fun shouldShowDesktopUi(context: Context): Boolean {
