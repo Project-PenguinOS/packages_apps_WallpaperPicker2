@@ -15,19 +15,16 @@
  */
 package com.android.wallpaper.module
 
-import android.app.WallpaperColors
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
-import com.android.customization.model.color.WallpaperColorResources
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.model.CategoryProvider
 import com.android.wallpaper.model.InlinePreviewIntentFactory
-import com.android.wallpaper.model.WallpaperInfo
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.monitor.PerformanceMonitor
 import com.android.wallpaper.network.Requester
@@ -88,15 +85,6 @@ interface Injector {
 
     fun getPerformanceMonitor(): PerformanceMonitor?
 
-    // TODO b/242908637 Remove this method when migrating to the new wallpaper preview screen
-    fun getPreviewFragment(
-        context: Context,
-        wallpaperInfo: WallpaperInfo,
-        viewAsHome: Boolean,
-        isAssetIdPresent: Boolean,
-        isNewTask: Boolean,
-    ): Fragment
-
     fun getRequester(context: Context): Requester
 
     fun getSystemFeatureChecker(): SystemFeatureChecker
@@ -133,11 +121,6 @@ interface Injector {
     fun getWallpaperColorsRepository(): WallpaperColorsRepository
 
     fun getWallpaperCategoryWrapper(): WallpaperCategoryWrapper
-
-    fun getWallpaperColorResources(
-        wallpaperColors: WallpaperColors,
-        context: Context,
-    ): WallpaperColorResources
 
     fun getMyPhotosIntentProvider(): MyPhotosIntentProvider
 

@@ -15,32 +15,23 @@
  */
 package com.android.wallpaper.module
 
-import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
-import com.android.customization.model.color.DefaultWallpaperColorResources
-import com.android.customization.model.color.WallpaperColorResources
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.model.CategoryProvider
 import com.android.wallpaper.model.InlinePreviewIntentFactory
-import com.android.wallpaper.model.LiveWallpaperInfo
-import com.android.wallpaper.model.WallpaperInfo
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.monitor.PerformanceMonitor
 import com.android.wallpaper.network.Requester
 import com.android.wallpaper.picker.CustomizationPickerActivity
-import com.android.wallpaper.picker.ImagePreviewFragment
-import com.android.wallpaper.picker.LivePreviewFragment
 import com.android.wallpaper.picker.MyPhotosStarter
 import com.android.wallpaper.picker.PreviewActivity
-import com.android.wallpaper.picker.PreviewFragment
 import com.android.wallpaper.picker.ViewOnlyPreviewActivity
 import com.android.wallpaper.picker.category.wrapper.WallpaperCategoryWrapper
 import com.android.wallpaper.picker.customization.data.content.WallpaperClient
@@ -206,25 +197,6 @@ constructor(
                 .also { performanceMonitor = it }
     }
 
-    override fun getPreviewFragment(
-        context: Context,
-        wallpaperInfo: WallpaperInfo,
-        viewAsHome: Boolean,
-        isAssetIdPresent: Boolean,
-        isNewTask: Boolean,
-    ): Fragment {
-        val isLiveWallpaper = wallpaperInfo is LiveWallpaperInfo
-        return (if (isLiveWallpaper) LivePreviewFragment() else ImagePreviewFragment()).apply {
-            arguments =
-                Bundle().apply {
-                    putParcelable(PreviewFragment.ARG_WALLPAPER, wallpaperInfo)
-                    putBoolean(PreviewFragment.ARG_VIEW_AS_HOME, viewAsHome)
-                    putBoolean(PreviewFragment.ARG_IS_ASSET_ID_PRESENT, isAssetIdPresent)
-                    putBoolean(PreviewFragment.ARG_IS_NEW_TASK, isNewTask)
-                }
-        }
-    }
-
     @Synchronized
     override fun getRequester(context: Context): Requester {
         return requester.get()
@@ -311,13 +283,6 @@ constructor(
 
     override fun getWallpaperColorsRepository(): WallpaperColorsRepository {
         return wallpaperColorsRepository.get()
-    }
-
-    override fun getWallpaperColorResources(
-        wallpaperColors: WallpaperColors,
-        context: Context,
-    ): WallpaperColorResources {
-        return DefaultWallpaperColorResources(wallpaperColors)
     }
 
     override fun getMyPhotosIntentProvider(): MyPhotosStarter.MyPhotosIntentProvider {

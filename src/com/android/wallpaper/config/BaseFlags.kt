@@ -76,11 +76,12 @@ abstract class BaseFlags {
 
     open fun isClockReactiveVariantsEnabled() = clockReactiveVariants()
 
-    open fun isMultiCropEnabled() = WallpaperManager.isMultiCropEnabled()
-
     open fun isComposeRefactorEnabled() = composeRefactorFlag()
 
     open fun isColorPickerUpdateEnabled() = colorPickerUpdateFlag()
+
+    // Local flag to gate Compose UI under the colorPickerUpdateFlag
+    open fun isColorPickerComposeEnabled() = false
 
     open fun isAdaptiveWallpaperEnabled() = adaptiveWallpaperFlag()
 
@@ -106,20 +107,6 @@ abstract class BaseFlags {
                     flag.name == Contract.FlagsTable.FLAG_NAME_CUSTOM_CLOCKS_ENABLED
                 }
                 ?.value == true
-    }
-
-    open fun isMonochromaticThemeEnabled(context: Context): Boolean {
-        return getCachedFlags(context)
-            .firstOrNull { flag -> flag.name == Contract.FlagsTable.FLAG_NAME_MONOCHROMATIC_THEME }
-            ?.value == true
-    }
-
-    open fun isAIWallpaperEnabled(context: Context): Boolean {
-        return getCachedFlags(context)
-            .firstOrNull { flag ->
-                flag.name == Contract.FlagsTable.FLAG_NAME_WALLPAPER_PICKER_UI_FOR_AIWP
-            }
-            ?.value == true
     }
 
     /**
