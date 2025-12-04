@@ -152,7 +152,7 @@ constructor(
                                 thumbnailAsset = it.commonWallpaperData.thumbAsset,
                                 title = it.commonWallpaperData.title,
                                 contentDescription = it.commonWallpaperData.title,
-                                onSectionClicked = {
+                                getLaunchActivityIntent = {
                                     persistentWallpaperModelRepository.setWallpaperModel(it)
                                     val previewIntent =
                                         WallpaperPreviewActivity.intentBuilder(context, true)
@@ -202,7 +202,7 @@ constructor(
                                 isDownloadable =
                                     (it as? WallpaperModel.StaticWallpaperModel)
                                         ?.downloadableWallpaperData != null,
-                                onSectionClicked = {
+                                getLaunchActivityIntent = {
                                     persistentWallpaperModelRepository.setWallpaperModel(it)
                                     val previewIntent =
                                         WallpaperPreviewActivity.intentBuilder(context, true)
@@ -213,7 +213,30 @@ constructor(
                                 },
                             )
                         }
-                    add(CategoryWallpapersItemViewModel.PlainThumbnailsViewModelCategory(items))
+                    val isResizeable: Boolean =
+                        ((wallpapers.getOrNull(0) as? WallpaperModel.LiveWallpaperModel)
+                            ?.creativeWallpaperData == null) && groupedWallpapers.size == 1
+
+                    val areTilesLarge: Boolean =
+                        (isResizeable && items.size <= MIN_THUMBNAILS_RESIZE_GRID)
+                    val columnCount =
+                        if (areTilesLarge) {
+                            MIN_COLUMN_COUNT
+                        } else {
+                            MAX_COLUMN_COUNT
+                        }
+
+                    val rows = items.chunked(columnCount)
+
+                    rows.forEach { row ->
+                        add(
+                            CategoryWallpapersItemViewModel.PlainThumbnailsRowViewModelCategory(
+                                rowThumbnails = row,
+                                totalColumns = columnCount,
+                                areTilesLarge = areTilesLarge,
+                            )
+                        )
+                    }
                 }
             }
 
@@ -229,6 +252,7 @@ constructor(
                 onNetworkPreferences = { isWifiOnly -> updateNetworkPreferences(isWifiOnly) },
                 title = title,
                 wallpaperItems = templates + wallpaperItems,
+                dismissScreen = { _dismissScreenEvent.emit(Unit) },
             )
         }
 
@@ -326,5 +350,10 @@ constructor(
         const val DEBUG = false
         const val TAG = "CategoryWallpapersViewModel"
         const val DEFAULT_GROUP = "default_group"
+        const val MIN_COLUMN_COUNT: Int = 2
+
+        const val MAX_COLUMN_COUNT: Int = 3
+
+        const val MIN_THUMBNAILS_RESIZE_GRID: Int = 8
     }
 }

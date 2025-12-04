@@ -123,7 +123,6 @@ object FullWallpaperPreviewBinder {
                                     // engine
                                     wallpaperSurface.setZOrderOnTop(true)
                                     workspaceSurface.setZOrderOnTop(true)
-
                                     if (isPreviewingFullScreen) {
                                         scrimView.isVisible = true
                                         scrimView.alpha = 0f
@@ -142,7 +141,6 @@ object FullWallpaperPreviewBinder {
                                     // engine and app UI (background engine z order is media)
                                     wallpaperSurface.setZOrderMediaOverlay(true)
                                     workspaceSurface.setZOrderMediaOverlay(true)
-
                                     setFinalPreviewCardRadiusAndEndLoading(isPreviewingFullScreen)
                                     transitionDisposableHandle?.dispose()
                                     transitionDisposableHandle = null
@@ -222,9 +220,6 @@ object FullWallpaperPreviewBinder {
                         signalConfigChange = signalConfigChange,
                         onStartTransition = onStartTransition,
                     )
-
-                wallpaperSurface.setZOrderMediaOverlay(true)
-
                 wallpaperSurface.holder.addCallback(surfaceCallback)
             }
             // When OnDestroy, release the surface

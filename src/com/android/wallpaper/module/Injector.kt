@@ -18,9 +18,7 @@ package com.android.wallpaper.module
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.ComponentActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleOwner
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.model.CategoryProvider
@@ -33,9 +31,6 @@ import com.android.wallpaper.picker.category.wrapper.WallpaperCategoryWrapper
 import com.android.wallpaper.picker.customization.data.content.WallpaperClient
 import com.android.wallpaper.picker.customization.data.repository.WallpaperColorsRepository
 import com.android.wallpaper.picker.customization.domain.interactor.WallpaperInteractor
-import com.android.wallpaper.picker.customization.domain.interactor.WallpaperSnapshotRestorer
-import com.android.wallpaper.picker.undo.domain.interactor.SnapshotRestorer
-import com.android.wallpaper.picker.undo.domain.interactor.UndoInteractor
 import com.android.wallpaper.util.DisplayUtils
 import kotlinx.coroutines.CoroutineScope
 
@@ -58,8 +53,6 @@ interface Injector {
     fun getCategoryProvider(context: Context): CategoryProvider
 
     fun getCurrentWallpaperInfoFactory(context: Context): CurrentWallpaperInfoFactory
-
-    fun getCustomizationSections(activity: ComponentActivity): CustomizationSections
 
     fun getDeepLinkRedirectIntent(context: Context, uri: Uri): Intent
 
@@ -99,24 +92,11 @@ interface Injector {
 
     fun getWallpaperStatusChecker(context: Context): WallpaperStatusChecker
 
-    fun getFragmentFactory(): FragmentFactory? {
-        return null
-    }
-
     fun getFlags(): BaseFlags
-
-    fun getUndoInteractor(context: Context, lifecycleOwner: LifecycleOwner): UndoInteractor
-
-    fun getSnapshotRestorers(context: Context): Map<Int, SnapshotRestorer> {
-        // Empty because we don't support undoing in WallpaperPicker2.
-        return HashMap()
-    }
 
     fun getWallpaperInteractor(context: Context): WallpaperInteractor
 
     fun getWallpaperClient(context: Context): WallpaperClient
-
-    fun getWallpaperSnapshotRestorer(context: Context): WallpaperSnapshotRestorer
 
     fun getWallpaperColorsRepository(): WallpaperColorsRepository
 
