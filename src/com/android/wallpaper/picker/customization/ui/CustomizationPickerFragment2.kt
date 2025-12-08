@@ -331,7 +331,7 @@ class CustomizationPickerFragment2 :
         val initialSelectedOption: CustomizationOption? =
             initialDestination?.let {
                 customizationOptionUtil.getCustomizationOptionFromDestination(it)
-            }
+            } ?: customizationPickerViewModel.screen.value.second
         if (initialSelectedOption != null) {
             bottomScrollView.alpha = 0.0f
             pickerMotionContainer.getConstraintSet(R.id.secondary)?.apply {
@@ -980,6 +980,10 @@ class CustomizationPickerFragment2 :
             previewPager = previewPager,
             lockPreviewLabel = previewPager.requireViewById(R.id.lock_preview_label),
             homePreviewLabel = previewPager.requireViewById(R.id.home_preview_label),
+            lockPreviewLabelContainer =
+                previewPager.requireViewById(R.id.lock_preview_label_container),
+            homePreviewLabelContainer =
+                previewPager.requireViewById(R.id.home_preview_label_container),
             lockPreview = previewPager.requireViewById(R.id.lock_preview),
             homePreview = previewPager.requireViewById(R.id.home_preview),
             lockPreviewShade = lockPreviewShade,
