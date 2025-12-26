@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.wallpaper.model.WallpaperRotationInitializer.NETWORK_PREFERENCE_CELLULAR_OK
 import com.android.wallpaper.model.WallpaperRotationInitializer.NETWORK_PREFERENCE_WIFI_ONLY
+import com.android.wallpaper.module.MultiPanesChecker
 import com.android.wallpaper.module.WallpaperPreferences
 import com.android.wallpaper.picker.common.preview.data.repository.PersistentWallpaperModelRepository
 import com.android.wallpaper.picker.data.WallpaperModel
@@ -56,6 +57,7 @@ constructor(
     private val persistentWallpaperModelRepository: PersistentWallpaperModelRepository,
     private val wallpaperManager: WallpaperManager,
     private val wallpaperPreferences: WallpaperPreferences,
+    private val multiPanesChecker: MultiPanesChecker,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -157,6 +159,7 @@ constructor(
                                     val previewIntent =
                                         WallpaperPreviewActivity.intentBuilder(context, true)
                                             .refreshCategory(true)
+                                            .newTask(multiPanesChecker.isMultiPanesEnabled(context))
                                             .navigateToExtendedEffects(false)
                                             .build()
                                     return@ThumbnailsViewModelCategory previewIntent
@@ -207,6 +210,7 @@ constructor(
                                     val previewIntent =
                                         WallpaperPreviewActivity.intentBuilder(context, true)
                                             .refreshCategory(true)
+                                            .newTask(multiPanesChecker.isMultiPanesEnabled(context))
                                             .navigateToExtendedEffects(false)
                                             .build()
                                     return@ThumbnailsViewModelCategory previewIntent
@@ -244,14 +248,25 @@ constructor(
                 Log.d(TAG, "here is the list of wallpaperItems yo: ${wallpaperItems}")
             }
 
+            // TODO(b/454852600): flag to be added here by replacing the 'false' value below
+            val isNewUIEnabled = false && !templates.isNullOrEmpty()
+
+            val wallpaperItem =
+                if (isNewUIEnabled) {
+                    wallpaperItems + templates
+                } else {
+                    templates + wallpaperItems
+                }
+
             return@combine CategoryWallpapersContentViewModel(
                 rotationEnabled = isRotationEnabled,
+                isNewUIEnabled = isNewUIEnabled,
                 onRotationStart = { startRotation() },
                 onShowRotationDialog = { onRotationStartClick() },
                 onCancelRotationDialog = { onCancelRotationDialog() },
                 onNetworkPreferences = { isWifiOnly -> updateNetworkPreferences(isWifiOnly) },
                 title = title,
-                wallpaperItems = templates + wallpaperItems,
+                wallpaperItems = wallpaperItem,
                 dismissScreen = { _dismissScreenEvent.emit(Unit) },
             )
         }
