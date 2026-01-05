@@ -16,12 +16,15 @@
 package com.android.wallpaper.config
 
 import android.content.Context
+import android.server.Flags.enableThemeService
 import com.android.systemui.shared.Flags.extendedWallpaperEffects
 import com.android.systemui.shared.Flags.extendibleThemeManager
+import com.android.systemui.shared.Flags.workspaceItemsLabelHidden
 import com.android.systemui.shared.customization.data.content.CustomizationProviderClient
 import com.android.systemui.shared.customization.data.content.CustomizationProviderClientImpl
 import com.android.systemui.shared.customization.data.content.CustomizationProviderContract as Contract
 import com.android.wallpaper.Flags.adaptiveWallpaperFlag
+import com.android.wallpaper.Flags.collapsableReorderedAiWallpapersScreen
 import com.android.wallpaper.Flags.colorPickerUpdateFlag
 import com.android.wallpaper.Flags.composeRefactorFlag
 import com.android.wallpaper.Flags.creativeWallpaperFieldCollectionWallpaper
@@ -34,8 +37,11 @@ import com.android.wallpaper.Flags.refactorWallpaperInfoFlag
 import com.android.wallpaper.Flags.refactorWallpaperPreviewScreenFlag
 import com.android.wallpaper.Flags.wallpaperRestorerFlag
 import com.android.wallpaper.R
-import com.android.wallpaper.module.InjectorProvider
 import com.android.wm.shell.shared.desktopmode.DesktopState
+import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
@@ -53,6 +59,8 @@ abstract class BaseFlags {
     open fun isWallpaperEffectModelDownloadEnabled() = true
 
     open fun isInterruptModelDownloadEnabled() = false
+
+    open fun isCollabsableSectionInAiEnabled() = collapsableReorderedAiWallpapersScreen()
 
     // local flag to enable the refactored version of IPF2
     open fun isWallpapersFragmentEnabled() = refactorIndividualPickerFlag()
@@ -75,6 +83,8 @@ abstract class BaseFlags {
     // Local flag to gate Compose UI under the colorPickerUpdateFlag
     open fun isColorPickerComposeEnabled() = true
 
+    open fun isThemeServiceEnabled() = enableThemeService()
+
     open fun isAdaptiveWallpaperEnabled() = adaptiveWallpaperFlag()
 
     open fun isRefactorWallpaperPreviewScreenEnabled() = refactorWallpaperPreviewScreenFlag()
@@ -84,6 +94,10 @@ abstract class BaseFlags {
     // This is just a local flag in order to ensure right behaviour in case
     // something goes wrong with PhotoPicker integration.
     open fun isPhotoPickerEnabled() = false
+
+    // This flag is to gate the dependency of default recents on new categories
+    // fetching logic.
+    open fun isRefactorWallpaperDefaults() = false
 
     open fun isKeyguardQuickAffordanceEnabled(context: Context): Boolean {
         return getCachedFlags(context)
@@ -144,10 +158,22 @@ abstract class BaseFlags {
         return desktopUiFlag() && context.resources.getBoolean(R.bool.isDesktopUi)
     }
 
+    open fun isHideAppLabelEnabled(): Boolean = workspaceItemsLabelHidden()
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface BaseFlagsEntryPointInjector {
+        fun getBaseFlags(): BaseFlags
+    }
+
     companion object {
         @JvmStatic
-        fun get(): BaseFlags {
-            return InjectorProvider.getInjector().getFlags()
+        fun get(context: Context): BaseFlags {
+            return EntryPoints.get(
+                    context.applicationContext,
+                    BaseFlagsEntryPointInjector::class.java,
+                )
+                .getBaseFlags()
         }
     }
 }

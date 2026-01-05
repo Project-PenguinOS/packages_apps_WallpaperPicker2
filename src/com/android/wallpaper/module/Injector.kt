@@ -19,7 +19,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.fragment.app.Fragment
-import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.model.CategoryProvider
 import com.android.wallpaper.model.InlinePreviewIntentFactory
@@ -38,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
  * Interface for a provider of "injected dependencies." (NOTE: The term "injector" is somewhat of a
  * misnomer; this is more aptly a service registry as part of a service locator design pattern.)
  */
+@Deprecated("Use Hilt instead, see b/459863716")
 interface Injector {
     /**
      * Returns a [CoroutineScope] that's bound to the lifecycle of the application.
@@ -91,8 +91,6 @@ interface Injector {
     fun getWallpaperRefresher(context: Context): WallpaperRefresher
 
     fun getWallpaperStatusChecker(context: Context): WallpaperStatusChecker
-
-    fun getFlags(): BaseFlags
 
     fun getWallpaperInteractor(context: Context): WallpaperInteractor
 

@@ -47,7 +47,6 @@ import androidx.transition.Transition
 import com.android.wallpaper.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.Screen
-import com.android.wallpaper.module.InjectorProvider
 import com.android.wallpaper.module.PackageStatusNotifier
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.AppbarFragment
@@ -68,6 +67,7 @@ import com.android.wallpaper.picker.preview.ui.view.PreviewActionGroup
 import com.android.wallpaper.picker.preview.ui.viewmodel.Action
 import com.android.wallpaper.picker.preview.ui.viewmodel.SmallPreviewAlphaAnimationBinder
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
+import com.android.wallpaper.picker.wallpapers.data.repository.CategoryWallpapersRepository
 import com.android.wallpaper.util.DisplayUtils
 import com.android.wallpaper.util.ExtendedWallpaperEffectsUtils
 import com.android.wallpaper.util.LaunchSourceUtils.LAUNCH_SOURCE_LAUNCHER
@@ -96,8 +96,7 @@ class SmallPreviewFragment : Hilt_SmallPreviewFragment() {
     @Inject lateinit var imageEffectDialogUtil: ImageEffectDialogUtil
     @Inject lateinit var wallpaperConnectionUtils: WallpaperConnectionUtils
     @Inject lateinit var packageStatusNotifier: PackageStatusNotifier
-
-    private val flags = InjectorProvider.getInjector().getFlags()
+    @Inject lateinit var categoryWallpapersRepository: CategoryWallpapersRepository
 
     private lateinit var currentView: View
     private lateinit var shareActivityResult: ActivityResultLauncher<Intent>
@@ -193,7 +192,7 @@ class SmallPreviewFragment : Hilt_SmallPreviewFragment() {
 
             // Sets up focus listeners for the lock preview and home preview to handle accessibility
             // focus events.
-            if (BaseFlags.get().shouldShowDesktopUi(it.context)) {
+            if (BaseFlags.get(it.context).shouldShowDesktopUi(it.context)) {
                 val lockPreview = it.requireViewById<View>(R.id.lock_preview)
                 val homePreview = it.requireViewById<View>(R.id.home_preview)
                 setUpPreviewCardFocusListener(lockPreview, Screen.LOCK_SCREEN)
@@ -249,6 +248,11 @@ class SmallPreviewFragment : Hilt_SmallPreviewFragment() {
         ) {
             Toast.makeText(context, R.string.wallpaper_set_successfully_message, Toast.LENGTH_SHORT)
                 .show()
+            // should invalidate live wallpaper cache for any wallpaper that is set
+            wallpaperPreviewViewModel.wallpaper?.value?.let {
+                categoryWallpapersRepository.invalidateCache(it.commonWallpaperData.id.collectionId)
+            }
+            categoryWallpapersRepository.refreshWallpapers()
             if (activityReference != null) {
                 if (wallpaperPreviewViewModel.isNewTask) {
                     activityReference.window?.exitTransition = Slide(Gravity.END)
@@ -324,7 +328,6 @@ class SmallPreviewFragment : Hilt_SmallPreviewFragment() {
                                         launcher,
                                         unwrappedContext,
                                         wallpaperConnectionUtils,
-                                        flags,
                                     )
                                 }
                             }
@@ -513,6 +516,7 @@ class SmallPreviewFragment : Hilt_SmallPreviewFragment() {
             logger = logger,
             imageEffectDialogUtil = imageEffectDialogUtil,
             packageStatusNotifier = packageStatusNotifier,
+            categoryWallpapersRepository = categoryWallpapersRepository,
             onNavigateToEditScreen = { navigateToEditScreen(it) },
             onStartShareActivity = { shareActivityResult.launch(it) },
         )

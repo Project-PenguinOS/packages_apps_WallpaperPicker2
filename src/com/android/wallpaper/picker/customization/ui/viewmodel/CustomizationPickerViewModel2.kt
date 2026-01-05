@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class CustomizationPickerViewModel2
@@ -83,7 +84,9 @@ constructor(
     private val _selectedPreviewScreen =
         MutableStateFlow(
             initialPreviewScreen
-                ?: if (isLaunchedFromLauncher || BaseFlags.get().shouldShowDesktopUi(context))
+                ?: if (
+                    isLaunchedFromLauncher || BaseFlags.get(context).shouldShowDesktopUi(context)
+                )
                     HOME_SCREEN
                 else LOCK_SCREEN
         )
@@ -102,7 +105,11 @@ constructor(
                     Pair(PickerScreen.MAIN, null)
                 }
             }
-            .shareIn(viewModelScope, SharingStarted.WhileSubscribed(), 1)
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(),
+                Pair(PickerScreen.MAIN, null),
+            )
 
     private val isLockPreviewReady: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val isHomePreviewReady: MutableStateFlow<Boolean> = MutableStateFlow(false)

@@ -87,6 +87,7 @@ class CustomizationPickerActivity2 :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enforcePortraitForHandheldAndFoldedDisplay()
 
         DailyLoggingAlarmScheduler.setAlarm(applicationContext)
 
@@ -192,7 +193,7 @@ class CustomizationPickerActivity2 :
     }
 
     override fun isUpArrowSupported(): Boolean {
-        return BaseFlags.get().shouldShowDesktopUi(baseContext) ||
+        return BaseFlags.get(baseContext).shouldShowDesktopUi(baseContext) ||
             !ActivityUtils.isSUWMode(baseContext)
     }
 
@@ -201,17 +202,12 @@ class CustomizationPickerActivity2 :
         super.onConfigurationChanged(newConfig)
         configuration?.let {
             val diff = it.diff(newConfig)
-            val isScreenSizeChange = diff and ActivityInfo.CONFIG_SCREEN_SIZE != 0
             val isAssetsPathsChange = diff and ActivityInfo.CONFIG_ASSETS_PATHS != 0
             val isUiModeChange = diff and ActivityInfo.CONFIG_UI_MODE != 0
-            if (isScreenSizeChange) {
-                recreate()
-            }
-            if (isAssetsPathsChange) {
-                colorUpdateViewModel.updateColors()
-            }
             if (isUiModeChange) {
                 colorUpdateViewModel.updateDarkModeAndColors()
+            } else if (isAssetsPathsChange) {
+                colorUpdateViewModel.updateColors()
             }
         }
         configuration?.setTo(newConfig)
@@ -245,6 +241,16 @@ class CustomizationPickerActivity2 :
                     )
                     .commit()
             }
+        }
+    }
+
+    private fun enforcePortraitForHandheldAndFoldedDisplay() {
+        val wantedOrientation =
+            if (displayUtils.isLargeScreenOrUnfoldedDisplay(this))
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        if (requestedOrientation != wantedOrientation) {
+            requestedOrientation = wantedOrientation
         }
     }
 

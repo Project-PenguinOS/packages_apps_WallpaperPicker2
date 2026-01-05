@@ -51,7 +51,6 @@ import com.android.wallpaper.picker.preview.ui.fragment.SmallPreviewFragment
 import com.android.wallpaper.picker.preview.ui.viewmodel.PreviewActionsViewModel.Companion.getEditActivityIntent
 import com.android.wallpaper.picker.preview.ui.viewmodel.PreviewActionsViewModel.Companion.isNewCreativeWallpaper
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
-import com.android.wallpaper.picker.wallpapers.data.repository.CategoryWallpapersRepository
 import com.android.wallpaper.util.ActivityUtils
 import com.android.wallpaper.util.DisplayUtils
 import com.android.wallpaper.util.WallpaperConnection
@@ -75,7 +74,6 @@ class WallpaperPreviewActivity :
     @Inject lateinit var creativeEffectsRepository: CreativeEffectsRepository
     @Inject lateinit var persistentWallpaperModelRepository: PersistentWallpaperModelRepository
     @Inject lateinit var liveWallpaperDownloader: LiveWallpaperDownloader
-    @Inject lateinit var categoryWallpapersRepository: CategoryWallpapersRepository
     @MainDispatcher @Inject lateinit var mainScope: CoroutineScope
     @Inject lateinit var wallpaperConnectionUtils: WallpaperConnectionUtils
 
@@ -83,9 +81,6 @@ class WallpaperPreviewActivity :
 
     private val wallpaperPreviewViewModel: WallpaperPreviewViewModel by viewModels()
     private val categoriesViewModel: CategoriesViewModel by viewModels()
-
-    private val isRefactorWallpaperPreviewScreenEnabled =
-        BaseFlags.get().isRefactorWallpaperPreviewScreenEnabled()
 
     private var isFirstRun = false
     private var navigateToExtendedWallpaperEffects: Boolean? = null
@@ -112,17 +107,28 @@ class WallpaperPreviewActivity :
 
         refreshCreativeCategories = intent.getBooleanExtra(SHOULD_CATEGORY_REFRESH, false)
 
-        val wallpaper: WallpaperModel =
-            if (!isFirstRun) {
-                    wallpaperPreviewViewModel.wallpaper.value
-                } else {
-                    persistentWallpaperModelRepository.wallpaperModel.value
-                        ?: intent
+        val (wallpaper, source) =
+            when {
+                !isFirstRun -> Pair(wallpaperPreviewViewModel.wallpaper.value, "previewViewModel")
+                persistentWallpaperModelRepository.wallpaperModel.value != null ->
+                    Pair(
+                        persistentWallpaperModelRepository.wallpaperModel.value,
+                        "persistentWallpaperModelRepository",
+                    )
+                else -> {
+                    Pair(
+                        intent
                             .getParcelableExtra(EXTRA_WALLPAPER_INFO, WallpaperInfo::class.java)
-                            ?.convertToWallpaperModel()
+                            ?.convertToWallpaperModel(),
+                        "intent",
+                    )
                 }
-                .also { persistentWallpaperModelRepository.cleanup() }
-                ?: throw IllegalStateException("No wallpaper for previewing")
+            }.also { persistentWallpaperModelRepository.cleanup() }
+        if (wallpaper == null) {
+            Log.e(TAG, "No wallpaper for previewing, source: $source")
+            showToastAndFinish(R.string.wallpaper_preview_error)
+            return
+        }
 
         if (isFirstRun) {
             wallpaperPreviewRepository.setWallpaperModel(wallpaper)
@@ -132,9 +138,10 @@ class WallpaperPreviewActivity :
             (supportFragmentManager.findFragmentById(R.id.wallpaper_preview_nav_host)
                     as NavHostFragment)
                 .navController
+
         val graph =
             navController.navInflater.inflate(
-                if (isRefactorWallpaperPreviewScreenEnabled)
+                if (BaseFlags.get(this).isRefactorWallpaperPreviewScreenEnabled())
                     R.navigation.wallpaper_preview_nav_graph_compose_refactor
                 else R.navigation.wallpaper_preview_nav_graph
             )
@@ -148,7 +155,7 @@ class WallpaperPreviewActivity :
                     putBoolean(HIDE_SURFACES_FOR_EXIT_TRANSITION, true)
                 } else if (
                     wallpaper is WallpaperModel.LiveWallpaperModel &&
-                        wallpaper.isNewCreativeWallpaper()
+                        wallpaper.isNewCreativeWallpaper(this@WallpaperPreviewActivity)
                 ) {
                     putAll(wallpaper.getNewCreativeWallpaperArgs())
                     // For creating a new creative wallpaper, replace the default start
@@ -222,7 +229,8 @@ class WallpaperPreviewActivity :
 
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.wallpaper_preview_nav_host)
-        (navHostFragment?.getChildFragmentManager()?.fragments?.get(0) as? SmallPreviewFragment)
+        (navHostFragment?.getChildFragmentManager()?.fragments?.firstOrNull()
+                as? SmallPreviewFragment)
             ?.onEnterAnimationComplete()
     }
 
@@ -299,8 +307,6 @@ class WallpaperPreviewActivity :
         refreshCreativeCategories?.let {
             if (it) {
                 categoriesViewModel.refreshCategory()
-                // TODO(b/444262256): remove direct references of repos to correct view model
-                categoryWallpapersRepository.refreshWallpapers()
             }
         }
 
@@ -311,13 +317,13 @@ class WallpaperPreviewActivity :
         return wallpaperModelFactory.getWallpaperModel(appContext, this)
     }
 
-    private fun showToastAndFinish() {
+    private fun showToastAndFinish(messageResId: Int = R.string.wallpaper_exit_split_screen) {
         // TODO(b/409622144) re-evaluate this string for freeform mode.
-        Toast.makeText(this, R.string.wallpaper_exit_split_screen, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
         finishAfterTransition()
     }
 
-    private fun isFullscreenPreviewEnabled() = BaseFlags.get().isFullscreenPreviewEnabled(this)
+    private fun isFullscreenPreviewEnabled() = BaseFlags.get(this).isFullscreenPreviewEnabled(this)
 
     companion object {
         const val HIDE_SURFACES_FOR_ENTER_TRANSITION = "hide_surfaces_for_enter_transition"

@@ -26,10 +26,10 @@ import android.net.wifi.WifiManager
 import android.service.wallpaper.WallpaperSettingsActivity
 import androidx.activity.result.ActivityResultLauncher
 import com.android.wallpaper.R
+import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.Effect
 import com.android.wallpaper.effects.EffectsController.EffectEnumInterface
 import com.android.wallpaper.module.ExtendedEffectsHelper
-import com.android.wallpaper.module.InjectorProvider
 import com.android.wallpaper.picker.data.CreativeWallpaperData
 import com.android.wallpaper.picker.data.LiveWallpaperData
 import com.android.wallpaper.picker.data.WallpaperModel
@@ -79,6 +79,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -96,7 +98,7 @@ constructor(
     @ApplicationContext private val context: Context,
     @MainDispatcher private val mainScope: CoroutineScope,
 ) {
-    private val flags = InjectorProvider.getInjector().getFlags()
+    private val flags = BaseFlags.get(context)
     val hideInformationFloatingSheet = MutableStateFlow(false)
 
     /** [INFORMATION] */
@@ -176,6 +178,18 @@ constructor(
         previewActionsInteractor.downloadableWallpaperModel.map {
             it.status == DownloadStatus.READY_TO_DOWNLOAD
         }
+
+    val isDownloadComplete: Flow<Boolean> =
+        previewActionsInteractor.downloadableWallpaperModel
+            // 1. Ensure we only react to changes in status
+            .distinctUntilChanged()
+            // 2. Ignore the initial status
+            .drop(1)
+            // 3. Map the DownloadStatus to a Boolean: true only if it is DOWNLOADED
+            .map { it.status == DownloadStatus.DOWNLOADED }
+            // 4. Use distinctUntilChanged again to prevent re-emissions of 'true'
+            //    if the status somehow transitions from DOWNLOADED -> DOWNLOADED.
+            .distinctUntilChanged()
 
     fun downloadWallpaper() {
         previewActionsInteractor.downloadWallpaper()
@@ -483,7 +497,6 @@ constructor(
                                 launcher,
                                 context,
                                 wallpaperConnectionUtils,
-                                flags,
                             )
                         }
                     }
@@ -695,10 +708,8 @@ constructor(
             return intent
         }
 
-        fun LiveWallpaperModel.isNewCreativeWallpaper(): Boolean {
-            return if (
-                InjectorProvider.getInjector().getFlags().isNewCreativeWallpaperCategoryEnabled()
-            ) {
+        fun LiveWallpaperModel.isNewCreativeWallpaper(context: Context): Boolean {
+            return if (BaseFlags.get(context).isNewCreativeWallpaperCategoryEnabled()) {
                 creativeWallpaperData?.isNewCreativeWallpaper ?: false
             } else {
                 creativeWallpaperData?.deleteUri?.toString()?.isEmpty() == true

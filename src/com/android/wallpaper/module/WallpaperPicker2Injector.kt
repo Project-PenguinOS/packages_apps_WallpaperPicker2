@@ -45,6 +45,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 
 @Singleton
+@Deprecated("Use Hilt instead, see b/459863716")
 open class WallpaperPicker2Injector
 @Inject
 constructor(
@@ -62,6 +63,7 @@ constructor(
     private val defaultWallpaperCategoryWrapper: Lazy<WallpaperCategoryWrapper>,
     private val packageNotifier: Lazy<PackageStatusNotifier>,
     private var wallpaperRefresher: Lazy<WallpaperRefresher>,
+    private val wallpaperStatusChecker: Lazy<WallpaperStatusChecker>,
 ) : Injector {
     private var alarmManagerWrapper: AlarmManagerWrapper? = null
     private var bitmapCropper: BitmapCropper? = null
@@ -73,8 +75,6 @@ constructor(
     private var performanceMonitor: PerformanceMonitor? = null
     private var systemFeatureChecker: SystemFeatureChecker? = null
     private var wallpaperPersister: WallpaperPersister? = null
-    private var wallpaperStatusChecker: WallpaperStatusChecker? = null
-    private var flags: BaseFlags? = null
     private var wallpaperInteractor: WallpaperInteractor? = null
     private var wallpaperClient: WallpaperClient? = null
 
@@ -209,9 +209,9 @@ constructor(
                     WallpaperChangedNotifier.getInstance(),
                     displayUtils.get(),
                     getBitmapCropper(),
-                    getWallpaperStatusChecker(context),
+                    wallpaperStatusChecker.get(),
                     getCurrentWallpaperInfoFactory(context),
-                    getFlags().isRefactorSettingWallpaper(),
+                    BaseFlags.get(context).isRefactorSettingWallpaper(),
                 )
                 .also { wallpaperPersister = it }
     }
@@ -227,15 +227,7 @@ constructor(
     }
 
     override fun getWallpaperStatusChecker(context: Context): WallpaperStatusChecker {
-        return wallpaperStatusChecker
-            ?: DefaultWallpaperStatusChecker(
-                    wallpaperManager = WallpaperManager.getInstance(context.applicationContext)
-                )
-                .also { wallpaperStatusChecker = it }
-    }
-
-    override fun getFlags(): BaseFlags {
-        return flags ?: object : BaseFlags() {}.also { flags = it }
+        return wallpaperStatusChecker.get()
     }
 
     override fun getWallpaperInteractor(context: Context): WallpaperInteractor {

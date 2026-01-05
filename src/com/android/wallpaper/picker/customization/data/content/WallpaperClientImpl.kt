@@ -47,7 +47,6 @@ import com.android.wallpaper.model.Screen
 import com.android.wallpaper.model.StaticWallpaperPrefMetadata
 import com.android.wallpaper.model.WallpaperInfo
 import com.android.wallpaper.model.WallpaperModelsPair
-import com.android.wallpaper.module.InjectorProvider
 import com.android.wallpaper.module.WallpaperPreferences
 import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.module.logging.UserEventLogger.SetWallpaperEntryPoint
@@ -607,12 +606,11 @@ constructor(
     override fun getCurrentCropHints(
         displaySizes: List<Point>,
         @SetWallpaperFlags which: Int,
-    ): Map<Point, Rect>? {
-        val flags = InjectorProvider.getInjector().getFlags()
-        val cropHints: List<Rect>? =
+    ): Map<Point, Rect> {
+        val cropHints: List<Rect> =
             wallpaperManager.getBitmapCrops(displaySizes, which, /* originalBitmap= */ true)
 
-        return cropHints?.indices?.associate { displaySizes[it] to cropHints[it] }
+        return cropHints.indices.associate { displaySizes[it] to cropHints[it] }
     }
 
     override suspend fun getWallpaperColors(

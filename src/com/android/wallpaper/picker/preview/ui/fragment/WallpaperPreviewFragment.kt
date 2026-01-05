@@ -47,6 +47,7 @@ import com.android.wallpaper.R
 import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.Screen
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType
+import com.android.wallpaper.module.logging.UserEventLogger
 import com.android.wallpaper.picker.AppbarFragment
 import com.android.wallpaper.picker.common.preview.ui.binder.PreviewBinder
 import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity2
@@ -124,12 +125,13 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
 
     @Inject lateinit var displayUtils: DisplayUtils
     @Inject lateinit var liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils
+    @Inject lateinit var logger: UserEventLogger
 
     private val wallpaperPreviewViewModel by activityViewModels<WallpaperPreviewViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!BaseFlags.get().isRefactorWallpaperPreviewScreenEnabled()) {
+        if (!BaseFlags.get(requireContext()).isRefactorWallpaperPreviewScreenEnabled()) {
             throw IllegalStateException(
                 "$this can only be used when " +
                     "refactor_wallpaper_preview_screen_flag is turned on."
@@ -261,6 +263,7 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
                     pagerState = pagerState,
                     lockScreenPreview = lockScreenPreview,
                     homeScreenPreview = homeScreenPreview,
+                    logger = logger,
                 )
             }
             scene(Scenes.ApplyWallpaper, userActions = mapOf(Back to Scenes.SmallPreview)) {

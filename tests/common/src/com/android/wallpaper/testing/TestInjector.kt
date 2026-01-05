@@ -18,8 +18,6 @@ package com.android.wallpaper.testing
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.android.systemui.shared.customization.data.content.CustomizationProviderClient
-import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.effects.EffectsController
 import com.android.wallpaper.model.CategoryProvider
 import com.android.wallpaper.model.InlinePreviewIntentFactory
@@ -58,6 +56,7 @@ import kotlinx.coroutines.Dispatchers
 
 /** Test implementation of [Injector] */
 @Singleton
+@Deprecated("Use Hilt instead, see b/459863716")
 open class TestInjector
 @Inject
 constructor(
@@ -85,7 +84,6 @@ constructor(
     private var systemFeatureChecker: SystemFeatureChecker? = null
     private var wallpaperPersister: WallpaperPersister? = null
     private var wallpaperStatusChecker: WallpaperStatusChecker? = null
-    private var flags: BaseFlags? = null
     private var wallpaperInteractor: WallpaperInteractor? = null
     private var wallpaperColorsRepository: WallpaperColorsRepository? = null
     private var previewActivityIntentFactory: InlinePreviewIntentFactory? = null
@@ -197,26 +195,6 @@ constructor(
     override fun getWallpaperStatusChecker(context: Context): WallpaperStatusChecker {
         return wallpaperStatusChecker
             ?: TestWallpaperStatusChecker().also { wallpaperStatusChecker = it }
-    }
-
-    override fun getFlags(): BaseFlags {
-        return flags
-            ?: object : BaseFlags() {
-                    override fun isWallpaperRestorerEnabled(): Boolean {
-                        return true
-                    }
-
-                    override fun isPageTransitionsFeatureEnabled(context: Context): Boolean {
-                        return true
-                    }
-
-                    override fun getCachedFlags(
-                        context: Context
-                    ): List<CustomizationProviderClient.Flag> {
-                        return listOf()
-                    }
-                }
-                .also { flags = it }
     }
 
     override fun getWallpaperInteractor(context: Context): WallpaperInteractor {
