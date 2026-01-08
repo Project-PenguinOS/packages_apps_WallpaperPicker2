@@ -24,6 +24,8 @@ import android.view.View
 import android.view.View.OnAttachStateChangeListener
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -31,8 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.fragment.findNavController
 import com.android.compose.animation.scene.Back
 import com.android.compose.animation.scene.DefaultElementContentPicker
 import com.android.compose.animation.scene.ElementKey
@@ -56,6 +59,7 @@ import com.android.wallpaper.picker.preview.ui.view.FullWallpaperPreviewScene
 import com.android.wallpaper.picker.preview.ui.view.SmallWallpaperPreviewScene
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
 import com.android.wallpaper.util.DisplayUtils
+import com.android.wallpaper.util.ExtendedWallpaperEffectsUtils
 import com.android.wallpaper.util.LaunchSourceUtils.LAUNCH_SOURCE_LAUNCHER
 import com.android.wallpaper.util.LaunchSourceUtils.WALLPAPER_LAUNCH_SOURCE
 import com.android.wallpaper.util.wallpaperconnection.LiveWallpaperConnectionUtils
@@ -127,6 +131,9 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
 
     private val wallpaperPreviewViewModel by activityViewModels<WallpaperPreviewViewModel>()
 
+    private val shareActivityResultLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!BaseFlags.get(requireContext()).isRefactorWallpaperPreviewScreenEnabled()) {
@@ -142,21 +149,8 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val lockScreenPreview =
-            SurfaceView(context).also {
-                // Hide surface view until the to-be-parented surface controls are ready. This makes
-                // sure surfaceCreated is called and we can reparent the surface controls in the
-                // callback.
-                it.isVisible = false
-            }
-        val homeScreenPreview =
-            SurfaceView(context).also {
-                // Hide surface view until the to-be-parented surface controls are ready. This makes
-                // sure surfaceCreated is called and we can reparent the surface controls in the
-                // callback.
-                it.isVisible = false
-            }
-
+        val lockScreenPreview = SurfaceView(context)
+        val homeScreenPreview = SurfaceView(context)
         // Note that we need to make sure the parent container view is attached to window, so that
         // the surface control's token and the container's window token are ready.
         // The host token is used by the external rendering to listen to its lifecycle, so that when
@@ -177,6 +171,14 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
             )
         }
 
+        val extendedWallpaperEffectActivityLauncher: ActivityResultLauncher<Intent> =
+            ExtendedWallpaperEffectsUtils.registerExtendedWallpaperEffectsActivityLauncher(
+                requireActivity(),
+                viewLifecycleOwner,
+                wallpaperPreviewViewModel,
+                requireContext(),
+            )
+
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
@@ -184,6 +186,8 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
                     WallpaperPreviewRootContent(
                         lockScreenPreview = lockScreenPreview,
                         homeScreenPreview = homeScreenPreview,
+                        extendedWallpaperEffectActivityLauncher =
+                            extendedWallpaperEffectActivityLauncher,
                     )
                 }
             }
@@ -236,6 +240,7 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
     fun WallpaperPreviewRootContent(
         lockScreenPreview: SurfaceView,
         homeScreenPreview: SurfaceView,
+        extendedWallpaperEffectActivityLauncher: ActivityResultLauncher<Intent>,
         modifier: Modifier = Modifier,
     ) {
         val sceneState =
@@ -262,6 +267,19 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
                     lockScreenPreview = lockScreenPreview,
                     homeScreenPreview = homeScreenPreview,
                     logger = logger,
+                    onFinishActivity = { activity?.finish() },
+                    onNavigateToEditScreen = { intent ->
+                        findNavController()
+                            .navigate(
+                                resId =
+                                    R.id
+                                        .action_wallpaperPreviewFragment_to_creativeEditPreviewFragment,
+                                args = Bundle().apply { putParcelable(ARG_EDIT_INTENT, intent) },
+                            )
+                    },
+                    onStartShareActivity = { intent -> shareActivityResultLauncher.launch(intent) },
+                    extendedWallpaperEffectActivityLauncher =
+                        extendedWallpaperEffectActivityLauncher,
                 )
             }
             scene(Scenes.ApplyWallpaper, userActions = mapOf(Back to Scenes.SmallPreview)) {
@@ -341,5 +359,9 @@ class WallpaperPreviewFragment : Hilt_WallpaperPreviewFragment() {
                 timestampRange(startMillis = 200) { fade(Elements.FullPreviewTopToolbar) }
             }
         }
+    }
+
+    companion object {
+        const val ARG_EDIT_INTENT = "arg_edit_intent"
     }
 }
