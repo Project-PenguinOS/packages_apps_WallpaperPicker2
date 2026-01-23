@@ -16,7 +16,11 @@
 
 package com.android.wallpaper.picker.preview.ui.view
 
+import android.content.Intent
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,8 +42,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
@@ -69,6 +76,15 @@ import com.android.wallpaper.picker.preview.ui.fragment.WallpaperPreviewFragment
 import com.android.wallpaper.picker.preview.ui.fragment.WallpaperPreviewFragment.Elements
 import com.android.wallpaper.picker.preview.ui.fragment.WallpaperPreviewFragment.Scenes
 import com.android.wallpaper.picker.preview.ui.fragment.WallpaperPreviewFragment.SharedElements
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.CUSTOMIZE
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.DELETE
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.DOWNLOAD
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.EDIT
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.EFFECTS
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.INFORMATION
+import com.android.wallpaper.picker.preview.ui.viewmodel.Action.SHARE
+import com.android.wallpaper.picker.preview.ui.viewmodel.DeleteConfirmationDialogViewModel
+import com.android.wallpaper.picker.preview.ui.viewmodel.PreviewActionsViewModel
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
 import com.android.wallpaper.picker.preview.ui.viewmodel.floatingSheet.PreviewFloatingSheetViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -86,9 +102,12 @@ fun ContentScope.SmallWallpaperPreviewScene(
     lockScreenPreview: View,
     homeScreenPreview: View,
     logger: UserEventLogger,
+    onFinishActivity: () -> Unit,
+    onNavigateToEditScreen: (Intent) -> Unit,
+    onStartShareActivity: (Intent) -> Unit,
+    extendedWallpaperEffectActivityLauncher: ActivityResultLauncher<Intent>,
 ) {
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
-    val colorScheme: ColorScheme = MaterialTheme.colorScheme
     val systemBarPadding: PaddingValues = WindowInsets.systemBars.asPaddingValues()
 
     val onLockSmallPreviewClicked: (() -> Unit)? by
@@ -124,14 +143,46 @@ fun ContentScope.SmallWallpaperPreviewScene(
         1 -> viewModel.setSmallPreviewSelectedTab(Screen.HOME_SCREEN)
     }
 
-    val isInformationButtonVisible: Boolean by
-        viewModel.previewActionsViewModel.isInformationVisible.collectAsStateWithLifecycle(false)
-    val onInformationClicked: (() -> Unit)? by
-        viewModel.previewActionsViewModel.onInformationClicked.collectAsStateWithLifecycle(null)
+    val actionsViewModel: PreviewActionsViewModel = viewModel.previewActionsViewModel
     val previewFloatingSheetViewModel: PreviewFloatingSheetViewModel? by
-        viewModel.previewActionsViewModel.previewFloatingSheetViewModel.collectAsStateWithLifecycle(
-            null
-        )
+        actionsViewModel.previewFloatingSheetViewModel.collectAsStateWithLifecycle(null)
+    /** [EFFECTS] */
+    val isEffectsButtonVisible: Boolean by
+        actionsViewModel.isEffectsVisible.collectAsStateWithLifecycle(false)
+    val onEffectsButtonClicked: ((ActivityResultLauncher<Intent>) -> Unit)? by
+        actionsViewModel.onEffectsClicked.collectAsStateWithLifecycle(null)
+    /** [INFORMATION] */
+    val isInformationButtonVisible: Boolean by
+        actionsViewModel.isInformationVisible.collectAsStateWithLifecycle(false)
+    val onInformationClicked: (() -> Unit)? by
+        actionsViewModel.onInformationClicked.collectAsStateWithLifecycle(null)
+    /** [DOWNLOAD] */
+    val isDownloadButtonVisible: Boolean by
+        actionsViewModel.isDownloadVisible.collectAsStateWithLifecycle(false)
+    val isDownloading: Boolean by actionsViewModel.isDownloading.collectAsStateWithLifecycle(false)
+    val onDownloadButtonClicked: (() -> Unit)? by
+        actionsViewModel.onDownloadButtonClicked.collectAsStateWithLifecycle(null)
+    /** [EDIT] */
+    val isEditButtonVisible: Boolean by
+        actionsViewModel.isEditVisible.collectAsStateWithLifecycle(false)
+    val editButtonIntent: Intent? by actionsViewModel.editIntent.collectAsStateWithLifecycle(null)
+    /** [CUSTOMIZE] */
+    val isCustomizeVisible: Boolean by
+        actionsViewModel.isCustomizeVisible.collectAsStateWithLifecycle(false)
+    val onCustomizeClicked: (() -> Unit)? by
+        actionsViewModel.onCustomizeClicked.collectAsStateWithLifecycle(null)
+    /** [SHARE] */
+    val isShareButtonVisible: Boolean by
+        actionsViewModel.isShareVisible.collectAsStateWithLifecycle(false)
+    val shareButtonIntent: Intent? by actionsViewModel.shareIntent.collectAsStateWithLifecycle(null)
+    /** [DELETE] */
+    val isDeleteButtonVisible: Boolean by
+        actionsViewModel.isDeleteVisible.collectAsStateWithLifecycle(false)
+    val onDeleteButtonClicked: (() -> Unit)? by
+        actionsViewModel.onDeleteClicked.collectAsStateWithLifecycle(null)
+    val deleteConfirmationDialogViewModel: DeleteConfirmationDialogViewModel? by
+        actionsViewModel.deleteConfirmationDialogViewModel.collectAsStateWithLifecycle(null)
+    val isDeleting: Boolean by actionsViewModel.isDeleting.collectAsStateWithLifecycle(false)
 
     Column {
         // Status bar space to avoid the top toolbar overlapping with the status bar.
@@ -146,6 +197,7 @@ fun ContentScope.SmallWallpaperPreviewScene(
         Spacer(modifier = Modifier.height(12.dp))
 
         PreviewPager(
+            viewModel = viewModel,
             modifier = Modifier.fillMaxWidth().weight(1f),
             pagerState = pagerState,
             lockScreenPreview = lockScreenPreview,
@@ -174,27 +226,67 @@ fun ContentScope.SmallWallpaperPreviewScene(
             modifier =
                 Modifier.element(Elements.SmallPreviewBottomActionBar)
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
+                    .padding(top = 12.dp, bottom = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (isEffectsButtonVisible) {
+                ActionButtonWithLabel(
+                    iconDrawableRes = R.drawable.ic_effect,
+                    labelRes = R.string.tab_effects,
+                    onClick = {
+                        onEffectsButtonClicked?.invoke(extendedWallpaperEffectActivityLauncher)
+                    },
+                )
+            }
+
             if (isInformationButtonVisible) {
-                Box(modifier = Modifier.padding(vertical = 4.dp).padding(end = 16.dp)) {
-                    IconButton(
-                        modifier = Modifier.size(56.dp),
-                        onClick = { onInformationClicked?.invoke() },
-                        colors =
-                            IconButtonDefaults.iconButtonColors()
-                                .copy(containerColor = colorScheme.surfaceContainerHighest),
-                        shape = CircleShape,
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_info_filled),
-                            contentDescription = stringResource(R.string.tab_info),
-                            tint = colorScheme.primary,
-                        )
-                    }
-                }
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_info_filled,
+                    contentDescriptionRes = R.string.tab_info,
+                    onClick = { onInformationClicked?.invoke() },
+                )
+            }
+
+            if (isDownloadButtonVisible) {
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_file_download_filled,
+                    contentDescriptionRes = R.string.bottom_action_bar_download,
+                    onClick = { onDownloadButtonClicked?.invoke() },
+                    showProgress = isDownloading,
+                )
+            }
+
+            if (isEditButtonVisible) {
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_edit_filled,
+                    contentDescriptionRes = R.string.edit_live_wallpaper,
+                    onClick = { editButtonIntent?.let { onNavigateToEditScreen.invoke(it) } },
+                )
+            }
+
+            if (isCustomizeVisible) {
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_tune_filled,
+                    contentDescriptionRes = R.string.tab_customize,
+                    onClick = { onCustomizeClicked?.invoke() },
+                )
+            }
+
+            if (isShareButtonVisible) {
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_share_filled,
+                    contentDescriptionRes = R.string.tab_share,
+                    onClick = { shareButtonIntent?.let { onStartShareActivity.invoke(it) } },
+                )
+            }
+
+            if (isDeleteButtonVisible) {
+                ActionButton(
+                    iconDrawableRes = R.drawable.ic_delete_filled,
+                    contentDescriptionRes = R.string.delete_live_wallpaper,
+                    onClick = { onDeleteButtonClicked?.invoke() },
+                )
             }
         }
 
@@ -210,11 +302,56 @@ fun ContentScope.SmallWallpaperPreviewScene(
                 },
             )
         }
+
+        // Delete wallpaper alert dialog
+        deleteConfirmationDialogViewModel?.let {
+            AlertDialog(
+                onDismissRequest = {
+                    if (!isDeleting) {
+                        it.onDismiss.invoke()
+                    }
+                },
+                title = { Text(text = stringResource(R.string.delete_live_wallpaper)) },
+                text = { Text(text = stringResource(R.string.delete_wallpaper_confirmation)) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (!isDeleting) {
+                                coroutineScope.launch {
+                                    it.onDelete?.invoke()
+                                    // After deletion completes, finish the Activity to return to
+                                    // the previous screen.
+                                    onFinishActivity.invoke()
+                                }
+                            }
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp).alpha(if (isDeleting) 1f else 0f),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                            Text(
+                                text = stringResource(R.string.delete_live_wallpaper),
+                                modifier = Modifier.alpha(if (isDeleting) 0f else 1f),
+                            )
+                        }
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { it.onDismiss.invoke() }, enabled = !isDeleting) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
     }
 }
 
 @Composable
 private fun ContentScope.PreviewPager(
+    viewModel: WallpaperPreviewViewModel,
     pagerState: PagerState,
     lockScreenPreview: View,
     homeScreenPreview: View,
@@ -259,14 +396,15 @@ private fun ContentScope.PreviewPager(
                         content {
                             PreviewScreen(
                                 preview = lockScreenPreview,
+                                viewModel = viewModel,
+                                screen = Screen.LOCK_SCREEN,
                                 modifier =
-                                    Modifier.fillMaxSize().clickable() {
+                                    Modifier.fillMaxSize().clickable {
                                         onPreviewClick.invoke(Screen.LOCK_SCREEN)
                                     },
                             )
                         }
                     }
-
                 1 ->
                     MovableElement(
                         key = SharedElements.HomeScreen,
@@ -275,8 +413,10 @@ private fun ContentScope.PreviewPager(
                         content {
                             PreviewScreen(
                                 preview = homeScreenPreview,
+                                viewModel = viewModel,
+                                screen = Screen.HOME_SCREEN,
                                 modifier =
-                                    Modifier.fillMaxSize().clickable() {
+                                    Modifier.fillMaxSize().clickable {
                                         onPreviewClick.invoke(Screen.HOME_SCREEN)
                                     },
                             )
@@ -288,7 +428,7 @@ private fun ContentScope.PreviewPager(
 }
 
 @Composable
-fun SmallPreviewTopToolbar(
+private fun SmallPreviewTopToolbar(
     viewModel: WallpaperPreviewViewModel,
     sceneState: MutableSceneTransitionLayoutState,
     modifier: Modifier,
@@ -316,8 +456,9 @@ fun SmallPreviewTopToolbar(
                 modifier = Modifier.size(40.dp),
                 onClick = {},
                 colors =
-                    IconButtonDefaults.iconButtonColors()
-                        .copy(containerColor = colorScheme.surfaceContainerHighest),
+                    IconButtonDefaults.iconButtonColors(
+                        containerColor = colorScheme.surfaceContainerHighest
+                    ),
                 shape = CircleShape,
             ) {
                 Icon(
@@ -359,6 +500,74 @@ fun SmallPreviewTopToolbar(
                     Text(text = stringResource(R.string.next_page_content_description))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ActionButton(
+    @DrawableRes iconDrawableRes: Int,
+    @StringRes contentDescriptionRes: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    showProgress: Boolean = false,
+) {
+    val colorScheme: ColorScheme = MaterialTheme.colorScheme
+
+    IconButton(
+        modifier = modifier.size(56.dp),
+        onClick = { onClick.invoke() },
+        colors =
+            IconButtonDefaults.iconButtonColors(
+                containerColor = colorScheme.surfaceContainerHighest
+            ),
+        shape = CircleShape,
+    ) {
+        if (showProgress) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+        } else {
+            Icon(
+                imageVector = ImageVector.vectorResource(iconDrawableRes),
+                contentDescription = stringResource(contentDescriptionRes),
+                tint = colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionButtonWithLabel(
+    @DrawableRes iconDrawableRes: Int,
+    @StringRes labelRes: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colorScheme: ColorScheme = MaterialTheme.colorScheme
+
+    Button(
+        modifier = modifier.height(56.dp),
+        onClick = { onClick.invoke() },
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = colorScheme.surfaceContainerHighest,
+                contentColor = colorScheme.primary,
+            ),
+        shape = RoundedCornerShape(percent = 50),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(iconDrawableRes),
+                contentDescription = null, // Handled by the button label
+            )
+            Text(text = stringResource(labelRes))
         }
     }
 }
