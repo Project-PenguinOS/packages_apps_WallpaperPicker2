@@ -425,6 +425,7 @@ class CustomizationPickerFragment2 :
                 )
 
             view.post {
+                if (this@CustomizationPickerFragment2.view == null) return@post
                 // Post to wait for the essential view dimensions to be obtained, to further
                 // calculate the motion scene dimensions.
                 if (!isDesktopUi) {
@@ -629,7 +630,9 @@ class CustomizationPickerFragment2 :
             (pickerMotionContainer.height -
                     wallpaperPickerEntryExpandedHeight -
                     bottomInset -
-                    resources.getDimensionPixelSize(R.dimen.customization_option_entry_height) / 2)
+                    resources.getDimensionPixelSize(R.dimen.customization_option_entry_height) *
+                        1.5)
+                .toInt()
                 .coerceAtMost(maxExpandedPagerHeight)
                 .coerceAtLeast(minExpandedPagerHeight)
         pickerMotionContainer
