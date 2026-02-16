@@ -92,8 +92,6 @@ abstract class BaseFlags {
 
     open fun isThemeServiceEnabled() = enableThemeService()
 
-    open fun isAdaptiveWallpaperEnabled() = adaptiveWallpaperFlag()
-
     open fun isRefactorWallpaperPreviewScreenEnabled() = refactorWallpaperPreviewScreenFlag()
 
     open fun isRefactorWallpaperInfoFlag() = refactorWallpaperInfoFlag()
@@ -170,6 +168,13 @@ abstract class BaseFlags {
         // TODO: b/416024080 use a better solution than a config boolean to show desktop UI.
         return context.resources.getBoolean(R.bool.isDesktopUi)
     }
+
+    open fun isAdaptiveWallpaperEnabled(context: Context): Boolean {
+        return adaptiveWallpaperFlag() &&
+            context.resources.getBoolean(R.bool.isAdaptiveWallpaperSupported)
+    }
+
+    open fun isDesktopSpecificWallpaperCollectionsEnabled() = false
 
     open fun isHideAppLabelEnabled(): Boolean = workspaceItemsLabelHidden()
 
