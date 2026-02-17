@@ -56,6 +56,7 @@ import com.android.wallpaper.util.ActivityUtils
 import com.android.wallpaper.util.DisplayUtils
 import com.android.wallpaper.util.WallpaperConnection
 import com.android.wallpaper.util.converter.WallpaperModelFactory
+import com.android.wallpaper.util.wallpaperconnection.LiveWallpaperConnectionUtils
 import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -77,6 +78,9 @@ class WallpaperPreviewActivity :
     @Inject lateinit var liveWallpaperDownloader: LiveWallpaperDownloader
     @MainDispatcher @Inject lateinit var mainScope: CoroutineScope
     @Inject lateinit var wallpaperConnectionUtils: WallpaperConnectionUtils
+    // Lazily instantiated via dagger.Lazy to ensure LiveWallpaperConnectionUtils is only created if
+    // isRefactorWallpaperPreviewScreenEnabled is true.
+    @Inject lateinit var liveWallpaperConnectionUtils: dagger.Lazy<LiveWallpaperConnectionUtils>
 
     private var refreshCreativeCategories: Boolean? = null
 
@@ -86,11 +90,15 @@ class WallpaperPreviewActivity :
     private var isFirstRun = false
     private var navigateToExtendedWallpaperEffects: Boolean? = null
 
+    private var isRefactorWallpaperPreviewScreenEnabled = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         isFirstRun = savedInstanceState == null
 
         window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
         super.onCreate(savedInstanceState)
+        isRefactorWallpaperPreviewScreenEnabled =
+            BaseFlags.get(this).isRefactorWallpaperPreviewScreenEnabled()
         enforcePortraitForHandheldAndFoldedDisplay()
         wallpaperPreviewViewModel.updateDisplayConfiguration()
         wallpaperPreviewViewModel.setIsWallpaperColorPreviewEnabled(
@@ -108,32 +116,22 @@ class WallpaperPreviewActivity :
 
         refreshCreativeCategories = intent.getBooleanExtra(SHOULD_CATEGORY_REFRESH, false)
 
-        val (wallpaper, source) =
-            when {
-                !isFirstRun -> Pair(wallpaperPreviewViewModel.wallpaper.value, "previewViewModel")
-                persistentWallpaperModelRepository.wallpaperModel.value != null ->
-                    Pair(
-                        persistentWallpaperModelRepository.wallpaperModel.value,
-                        "persistentWallpaperModelRepository",
-                    )
-                else -> {
-                    Pair(
-                        intent
-                            .getParcelableExtra(EXTRA_WALLPAPER_INFO, WallpaperInfo::class.java)
-                            ?.convertToWallpaperModel(),
-                        "intent",
-                    )
+        val wallpaper =
+            if (isFirstRun) {
+                    (persistentWallpaperModelRepository.wallpaperModel.value
+                            ?: intent
+                                .getParcelableExtra(EXTRA_WALLPAPER_INFO, WallpaperInfo::class.java)
+                                ?.convertToWallpaperModel())
+                        ?.also { wallpaperPreviewRepository.setWallpaperModel(it) }
+                        ?: run {
+                            Log.e(TAG, "No wallpaper for previewing on first launch")
+                            showToastAndFinish(R.string.wallpaper_preview_error)
+                            return
+                        }
+                } else {
+                    wallpaperPreviewViewModel.wallpaper.value
                 }
-            }.also { persistentWallpaperModelRepository.cleanup() }
-        if (wallpaper == null) {
-            Log.e(TAG, "No wallpaper for previewing, source: $source")
-            showToastAndFinish(R.string.wallpaper_preview_error)
-            return
-        }
-
-        if (isFirstRun) {
-            wallpaperPreviewRepository.setWallpaperModel(wallpaper)
-        }
+                .also { persistentWallpaperModelRepository.cleanup() }
 
         val navController =
             (supportFragmentManager.findFragmentById(R.id.wallpaper_preview_nav_host)
@@ -142,7 +140,7 @@ class WallpaperPreviewActivity :
 
         val graph =
             navController.navInflater.inflate(
-                if (BaseFlags.get(this).isRefactorWallpaperPreviewScreenEnabled())
+                if (isRefactorWallpaperPreviewScreenEnabled)
                     R.navigation.wallpaper_preview_nav_graph_compose_refactor
                 else R.navigation.wallpaper_preview_nav_graph
             )
@@ -359,6 +357,13 @@ class WallpaperPreviewActivity :
             // EffectsController is Singleton scoped. Therefore, persist state on config change
             // restart, and only destroy when activity is finishing.
             creativeEffectsRepository.destroy()
+            // liveWallpaperConnectionUtils is Activity-Retained Scoped, however, the associated
+            // connections can cause memory leaks if we do not proactively release them.
+            // We only disconnect when the activity is finishing, so that we can retain the
+            // connections on config change.
+            if (isRefactorWallpaperPreviewScreenEnabled) {
+                mainScope.launch { liveWallpaperConnectionUtils.get().disconnectAll() }
+            }
         }
         liveWallpaperDownloader.cleanup()
         // TODO(b/333879532): Only disconnect when leaving the Activity without introducing black
@@ -367,7 +372,9 @@ class WallpaperPreviewActivity :
         // TODO(b/328302105): MainScope ensures the job gets done non-blocking even if the
         //   activity has been destroyed already. Consider making this part of
         //   WallpaperConnectionUtils.
-        mainScope.launch { wallpaperConnectionUtils.disconnectAll() }
+        if (!isRefactorWallpaperPreviewScreenEnabled) {
+            mainScope.launch { wallpaperConnectionUtils.disconnectAll() }
+        }
 
         refreshCreativeCategories?.let {
             if (it) {
@@ -393,7 +400,7 @@ class WallpaperPreviewActivity :
     companion object {
         const val HIDE_SURFACES_FOR_ENTER_TRANSITION = "hide_surfaces_for_enter_transition"
         const val HIDE_SURFACES_FOR_EXIT_TRANSITION = "hide_surfaces_for_exit_transition"
-        private const val SHOULD_NAVIGATE_TO_EXTENDED_WALLPAPER_EFFECTS =
+        const val SHOULD_NAVIGATE_TO_EXTENDED_WALLPAPER_EFFECTS =
             "should_navigate_to_extended_wallpaper_effects"
         private const val HIDE_INFO_SHEET = "hide_info_sheet"
 

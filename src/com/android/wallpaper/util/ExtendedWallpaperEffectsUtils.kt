@@ -82,6 +82,7 @@ object ExtendedWallpaperEffectsUtils {
         lifecycleOwner: LifecycleOwner,
         wallpaperPreviewViewModel: WallpaperPreviewViewModel,
         context: Context?,
+        exitActivityOnCancel: Boolean = false,
     ): ActivityResultLauncher<Intent> {
         return activity.activityResultRegistry.register(
             PREVIEW_RESULT_REGISTRY,
@@ -93,28 +94,43 @@ object ExtendedWallpaperEffectsUtils {
 
                 override fun parseResult(resultCode: Int, intent: Intent?): Int {
                     if (resultCode == RESULT_OK) {
-                        wallpaperPreviewViewModel.wallpaper.value?.let { unpackedWallpaperModel ->
-                            context?.let { unpackedContext ->
+                        context?.let { unpackedContext ->
+                            val updateModel = { model: LiveWallpaperModel ->
+                                wallpaperPreviewViewModel.setShouldUpdateSelectedPreviewTab(true)
+                                wallpaperPreviewViewModel.setPreviewWallpaperModel(model)
+                            }
+                            val description =
+                                intent
+                                    ?.extras
+                                    ?.getParcelable(
+                                        WALLPAPER_DESCRIPTION_CONTENT_HANDLING,
+                                        WallpaperDescription::class.java,
+                                    )
+
+                            if (wallpaperPreviewViewModel.wallpaper.value != null) {
                                 ContentHandlingUtil.updatePreview(
                                     context = unpackedContext.applicationContext,
-                                    wallpaperModel = unpackedWallpaperModel,
-                                    wallpaperDescription =
-                                        intent
-                                            ?.extras
-                                            ?.getParcelable(
-                                                WALLPAPER_DESCRIPTION_CONTENT_HANDLING,
-                                                WallpaperDescription::class.java,
-                                            ),
-                                ) { wallpaperModel ->
-                                    wallpaperPreviewViewModel.setShouldUpdateSelectedPreviewTab(
-                                        true
+                                    wallpaperModel = wallpaperPreviewViewModel.wallpaper.value!!,
+                                    wallpaperDescription = description,
+                                    updateModel,
+                                )
+                            } else {
+                                val convertedLiveWallpaperModel: LiveWallpaperModel? =
+                                    description?.toLiveWallpaperModel(
+                                        unpackedContext.applicationContext
                                     )
-                                    wallpaperPreviewViewModel.setPreviewWallpaperModel(
-                                        wallpaperModel
+                                if (convertedLiveWallpaperModel != null) {
+                                    updateModel(convertedLiveWallpaperModel)
+                                } else {
+                                    Log.e(
+                                        TAG,
+                                        "Failed to convert description to live wallpaper model",
                                     )
                                 }
                             }
                         }
+                    } else {
+                        if (exitActivityOnCancel) activity.finishAfterTransition()
                     }
                     return resultCode
                 }

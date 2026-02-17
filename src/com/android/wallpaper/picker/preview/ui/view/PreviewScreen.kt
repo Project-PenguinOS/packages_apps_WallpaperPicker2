@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
@@ -37,35 +38,42 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.android.wallpaper.model.Screen
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
+import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel.PreviewTarget
 
 /** The screen that hosts the lock/home screen preview */
 @Composable
 fun PreviewScreen(
     preview: View,
     viewModel: WallpaperPreviewViewModel,
-    screen: Screen,
+    previewTarget: PreviewTarget,
     modifier: Modifier,
 ) {
+    // TODO (b/465178380): Use the real corner radius according to DeviceDisplayType
     Box(modifier = modifier.clip(RoundedCornerShape(percent = 10))) {
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { preview })
 
-        PreviewShade(viewModel = viewModel, screen = screen, modifier = Modifier.fillMaxSize())
+        PreviewShade(
+            viewModel = viewModel,
+            previewTarget = previewTarget,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
 @Composable
 fun PreviewShade(
     viewModel: WallpaperPreviewViewModel,
-    screen: Screen,
+    previewTarget: PreviewTarget,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
     val lowResBitmap: Bitmap? by
-        viewModel.staticWallpaperPreviewViewModel.lowResBitmap.collectAsStateWithLifecycle(null)
-    val shadeAlpha: Float by viewModel.previewShadeAlpha(screen).collectAsStateWithLifecycle()
+        viewModel.staticWallpaperPreviewViewModel.lowResBitmap.collectAsStateWithLifecycle()
+
+    val shadeAlpha: Float by
+        viewModel.previewShadeAlpha(previewTarget).collectAsStateWithLifecycle()
     val shadeAnimateAlpha: Float by animateFloatAsState(shadeAlpha)
 
     Box(modifier = modifier.alpha(shadeAnimateAlpha).background(colorScheme.surfaceContainer)) {

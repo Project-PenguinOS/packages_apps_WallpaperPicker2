@@ -28,7 +28,7 @@ import com.android.wallpaper.Flags.collapsableReorderedAiWallpapersScreen
 import com.android.wallpaper.Flags.colorPickerUpdateFlag
 import com.android.wallpaper.Flags.composeRefactorFlag
 import com.android.wallpaper.Flags.creativeWallpaperFieldCollectionWallpaper
-import com.android.wallpaper.Flags.desktopUiFlag
+import com.android.wallpaper.Flags.enableAndroidPhotopicker
 import com.android.wallpaper.Flags.enablePackThemeEntry
 import com.android.wallpaper.Flags.enableRecentWallpaperDeletion
 import com.android.wallpaper.Flags.enableRecentsDeletionViaProvider
@@ -98,6 +98,8 @@ abstract class BaseFlags {
 
     open fun isRefactorWallpaperInfoFlag() = refactorWallpaperInfoFlag()
 
+    open fun isEnableAndroidPhotoPicker() = enableAndroidPhotopicker()
+
     // This is just a local flag in order to ensure right behaviour in case
     // something goes wrong with PhotoPicker integration.
     open fun isPhotoPickerEnabled() = false
@@ -166,7 +168,7 @@ abstract class BaseFlags {
 
     open fun shouldShowDesktopUi(context: Context): Boolean {
         // TODO: b/416024080 use a better solution than a config boolean to show desktop UI.
-        return desktopUiFlag() && context.resources.getBoolean(R.bool.isDesktopUi)
+        return context.resources.getBoolean(R.bool.isDesktopUi)
     }
 
     open fun isHideAppLabelEnabled(): Boolean = workspaceItemsLabelHidden()

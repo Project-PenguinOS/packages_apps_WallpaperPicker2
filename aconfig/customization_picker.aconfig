@@ -61,16 +61,6 @@ flag {
 }
 
 flag {
-    name: "desktop_ui_flag"
-    namespace: "desktop_personalization"
-    description: "Mouse, keyboard, large screen improvements for customization picker"
-    bug: "415883086"
-    metadata {
-        purpose: PURPOSE_FEATURE
-    }
-}
-
-flag {
     name: "adaptive_wallpaper_flag"
     namespace: "customization_picker"
     description: "Add wallpapers that change based on the system's theme"
@@ -123,4 +113,29 @@ flag {
     namespace: "customization_picker"
     description: "Enables deletion of recent wallpaper entries via the content provider"
     bug: "465589212"
+}
+
+flag {
+    name: "enable_android_photopicker"
+    namespace: "customization_picker"
+    description: "Enables the Android Photopicker"
+    bug: "475397703"
+}
+
+flag {
+    name: "enable_ai_clocks"
+    namespace: "customization_picker"
+    description: "Enables AI clocks functionality"
+    bug: "479587332"
+    metadata {
+            purpose: PURPOSE_FEATURE
+    }
+}
+
+
+flag {
+    name: "enable_effect_for_cat_smile"
+    namespace: "customization_picker"
+    description: "Enables effect for the cat smile project"
+    bug: "479401365"
 }

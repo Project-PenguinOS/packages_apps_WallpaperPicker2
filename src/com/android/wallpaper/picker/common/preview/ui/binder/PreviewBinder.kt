@@ -42,8 +42,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.android.wallpaper.model.Screen
-import com.android.wallpaper.model.wallpaper.DeviceDisplayType
+import com.android.wallpaper.model.Screen.HOME_SCREEN
+import com.android.wallpaper.model.Screen.LOCK_SCREEN
+import com.android.wallpaper.model.wallpaper.DeviceDisplayType.FOLDED
+import com.android.wallpaper.model.wallpaper.DeviceDisplayType.SINGLE
+import com.android.wallpaper.model.wallpaper.DeviceDisplayType.UNFOLDED
 import com.android.wallpaper.picker.customization.shared.model.WallpaperColorsModel
 import com.android.wallpaper.picker.customization.shared.model.WallpaperDestination.Companion.toSetWallpaperFlags
 import com.android.wallpaper.picker.data.WallpaperModel
@@ -54,12 +57,16 @@ import com.android.wallpaper.picker.preview.ui.binder.StaticWallpaperPreviewBind
 import com.android.wallpaper.picker.preview.ui.util.SubsamplingScaleImageViewUtil.setOnNewCropListener
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel
 import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel.Companion.isCroppable
+import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel.DisplaySizes
+import com.android.wallpaper.picker.preview.ui.viewmodel.WallpaperPreviewViewModel.PreviewTarget
 import com.android.wallpaper.picker.preview.ui.viewmodel.WorkspacePreviewConfigViewModel
 import com.android.wallpaper.util.PreviewUtils
 import com.android.wallpaper.util.SurfaceViewUtils
 import com.android.wallpaper.util.WallpaperConnection.WhichPreview
 import com.android.wallpaper.util.WallpaperCropUtils
+import com.android.wallpaper.util.wallpaperconnection.LiveWallpaperConnection
 import com.android.wallpaper.util.wallpaperconnection.LiveWallpaperConnectionUtils
+import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils.Companion.shouldEnforceSingleEngine
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import java.lang.Integer.min
 import kotlin.coroutines.resume
@@ -73,26 +80,194 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /** Binder for the lock/home screen preview. */
 object PreviewBinder {
 
-    fun bind(
+    interface PreviewBinding {
+        fun releasePreview()
+    }
+
+    fun bindSinglePreviews(
+        applicationContext: Context,
+        viewModel: WallpaperPreviewViewModel,
+        viewLifecycleOwner: LifecycleOwner,
+        liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils,
+        display: Display,
+        hostToken: IBinder,
+        windowToken: IBinder,
+        lockScreenPreview: SurfaceView,
+        homeScreenPreview: SurfaceView,
+        displaySizes: DisplaySizes,
+        onDispatchTouchEventReady:
+            (
+                previewTarget: PreviewTarget, onDispatchTouchEvent: (event: MotionEvent) -> Unit,
+            ) -> Unit,
+    ): List<PreviewBinding> {
+        return listOf(
+            // Bind lock screen preview
+            bind(
+                preview = lockScreenPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(LOCK_SCREEN, SINGLE),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(LOCK_SCREEN, SINGLE),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+            // Bind home screen preview
+            bind(
+                preview = homeScreenPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(HOME_SCREEN, SINGLE),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(HOME_SCREEN, SINGLE),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+        )
+    }
+
+    fun bindFoldablePreviews(
+        applicationContext: Context,
+        viewModel: WallpaperPreviewViewModel,
+        viewLifecycleOwner: LifecycleOwner,
+        liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils,
+        display: Display,
+        hostToken: IBinder,
+        windowToken: IBinder,
+        lockScreenPreview: SurfaceView,
+        lockScreenUnfoldedPreview: SurfaceView,
+        homeScreenPreview: SurfaceView,
+        homeScreenUnfoldedPreview: SurfaceView,
+        displaySizes: DisplaySizes,
+        onDispatchTouchEventReady:
+            (
+                previewTarget: PreviewTarget, onDispatchTouchEvent: (event: MotionEvent) -> Unit,
+            ) -> Unit,
+    ): List<PreviewBinding> {
+        return listOf(
+            // Bind lock screen previews
+            bind(
+                preview = lockScreenPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(LOCK_SCREEN, FOLDED),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(LOCK_SCREEN, FOLDED),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+            bind(
+                preview = lockScreenUnfoldedPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(LOCK_SCREEN, UNFOLDED),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(LOCK_SCREEN, UNFOLDED),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+            // Bind home screen previews
+            bind(
+                preview = homeScreenPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(HOME_SCREEN, FOLDED),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(HOME_SCREEN, FOLDED),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+            bind(
+                preview = homeScreenUnfoldedPreview,
+                viewModel = viewModel,
+                applicationContext = applicationContext,
+                viewLifecycleOwner = viewLifecycleOwner,
+                previewTarget = PreviewTarget(HOME_SCREEN, UNFOLDED),
+                displaySizes = displaySizes,
+                display = display,
+                hostToken = hostToken,
+                windowToken = windowToken,
+                liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
+                onDispatchTouchEventReady = { onDispatchTouchEvent ->
+                    onDispatchTouchEventReady.invoke(
+                        PreviewTarget(HOME_SCREEN, UNFOLDED),
+                        onDispatchTouchEvent,
+                    )
+                },
+            ),
+        )
+    }
+
+    private fun bind(
         preview: SurfaceView,
         viewModel: WallpaperPreviewViewModel,
         applicationContext: Context,
         viewLifecycleOwner: LifecycleOwner,
-        screen: Screen,
-        displaySize: Point,
-        deviceDisplayType: DeviceDisplayType,
+        previewTarget: PreviewTarget,
+        displaySizes: DisplaySizes,
         display: Display,
         hostToken: IBinder,
         windowToken: IBinder,
         liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils,
-    ) {
+        onDispatchTouchEventReady: (onDispatchTouchEvent: (event: MotionEvent) -> Unit) -> Unit,
+    ): PreviewBinding {
         val wallpaperSurfaceControl: MutableStateFlow<WallpaperSurfaceControl?> =
             MutableStateFlow(null)
         val workspaceSurfaceControl: MutableStateFlow<SurfaceControl?> = MutableStateFlow(null)
         var surfaceViewCallback: SurfaceViewUtils.SurfaceCallback? = null
 
+        fun releasePreview() {
+            wallpaperSurfaceControl.value?.release()
+            wallpaperSurfaceControl.value = null
+            workspaceSurfaceControl.value?.release()
+            workspaceSurfaceControl.value = null
+            surfaceViewCallback?.let { preview.holder.removeCallback(it) }
+            surfaceViewCallback = null
+        }
+
         // Set fixed size as the size of the correspondent display, which is the largest size a
         // preview is expected to expand. So that we will not lose image resolution when expanding.
+        val displaySize: Point = displaySizes.getDisplaySize(previewTarget.deviceDisplayType)
         preview.holder.setFixedSize(displaySize.x, displaySize.y)
         // Make surface view's lifecycle follows attach and detach, instead of visibility
         preview.setSurfaceLifecycle(SURFACE_LIFECYCLE_FOLLOWS_ATTACHMENT)
@@ -104,45 +279,32 @@ object PreviewBinder {
                         val (wallpaper, whichPreview) = smallWallpaper
 
                         if (wallpaper is LiveWallpaperModel) {
-                            // TODO (b/423956081): Figure out when we need to force single engine.
-                            //                     We may use wallpaper.shouldEnforceSingleEngine()
-                            val forceSingleEngine = true
-
+                            val forceSingleEngine = wallpaper.shouldEnforceSingleEngine()
                             val liveWallpaperSurfaceControl: WallpaperSurfaceControl.Live? =
                                 renderLiveWallpaperPreview(
                                     context = applicationContext,
                                     wallpaperModel = wallpaper,
                                     forceSingleEngine = forceSingleEngine,
-                                    displaySize = displaySize,
+                                    engineDisplaySize =
+                                        displaySizes.getEngineDisplaySize(
+                                            displayType = previewTarget.deviceDisplayType,
+                                            forceSingleEngine = forceSingleEngine,
+                                        ),
                                     whichPreview = whichPreview,
                                     windowToken = windowToken,
-                                    destinationFlag = screen.toFlag(),
+                                    destinationFlag = previewTarget.screen.toFlag(),
                                     liveWallpaperConnectionUtils = liveWallpaperConnectionUtils,
-                                    onEngineCreated = { engine ->
+                                    onEngineReady = { engine ->
                                         // Note that there will be only one engine created callback
                                         // when forceSingleEngine is true
                                         preview.viewTreeObserver
                                             .addOnWindowVisibilityChangeListener { visibility ->
                                                 engine.trySetIsVisible(visibility == View.VISIBLE)
                                             }
-                                        // TODO (b/423956081): Figure out when we should pass the
-                                        //                     touch event.
                                         // Set up on dispatch touch event
-                                        if (forceSingleEngine) {
-                                            Screen.entries.forEach {
-                                                setOnDispatchTouchEventForLiveWallpapers(
-                                                    viewModel = viewModel,
-                                                    screen = it,
-                                                    engine = engine,
-                                                )
-                                            }
-                                        } else {
-                                            setOnDispatchTouchEventForLiveWallpapers(
-                                                viewModel = viewModel,
-                                                screen = screen,
-                                                engine = engine,
-                                            )
-                                        }
+                                        onDispatchTouchEventReady.invoke(
+                                            getOnDispatchTouchEventForLiveWallpapers(engine)
+                                        )
                                         // Set up on apply live wallpaper callback
                                         setOnApplyLiveWallpaper(
                                             viewModel = viewModel,
@@ -162,11 +324,11 @@ object PreviewBinder {
                                 renderStaticWallpaperPreview(
                                     applicationContext = applicationContext,
                                     lifecycleOwner = viewLifecycleOwner,
-                                    screen = screen,
                                     viewModel = viewModel,
                                     displaySize = displaySize,
                                     display = display,
                                     hostToken = hostToken,
+                                    onDispatchTouchEventReady = onDispatchTouchEventReady,
                                 )
                             // Release before assigning a new surface control view host
                             wallpaperSurfaceControl.value?.release()
@@ -183,8 +345,7 @@ object PreviewBinder {
                             // Create SurfaceControl for the workspace
                             val workspaceRenderResult: WorkspaceRenderResult? =
                                 renderWorkspacePreview(
-                                    screen = screen,
-                                    deviceDisplayType = deviceDisplayType,
+                                    previewTarget = previewTarget,
                                     wallpaperPreviewViewModel = viewModel,
                                     wallpaperColorsModel = wallpaperColorsModel,
                                     displaySize = displaySize,
@@ -210,8 +371,8 @@ object PreviewBinder {
                                         override fun surfaceCreated(holder: SurfaceHolder) {
                                             preview.reparentWallpaper(wallpaperSurfaceControl)
                                             preview.reparentWorkspace(workspaceSurfaceControl)
-                                            viewModel.setPreviewReady(
-                                                screen = screen,
+                                            viewModel.setPreviewReady2(
+                                                previewTarget = previewTarget,
                                                 isReady = true,
                                             )
                                         }
@@ -231,12 +392,12 @@ object PreviewBinder {
                 }
             }
             // Release when destroyed
-            wallpaperSurfaceControl.value?.release()
-            wallpaperSurfaceControl.value = null
-            workspaceSurfaceControl.value?.release()
-            workspaceSurfaceControl.value = null
-            surfaceViewCallback?.let { preview.holder.removeCallback(it) }
-            surfaceViewCallback = null
+            releasePreview()
+        }
+        return object : PreviewBinding {
+            override fun releasePreview() {
+                releasePreview()
+            }
         }
     }
 
@@ -244,41 +405,41 @@ object PreviewBinder {
         context: Context,
         wallpaperModel: LiveWallpaperModel,
         forceSingleEngine: Boolean,
-        displaySize: Point,
+        engineDisplaySize: Point,
         whichPreview: WhichPreview,
         windowToken: IBinder,
         destinationFlag: Int,
         liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils,
-        onEngineCreated: (engine: IWallpaperEngine) -> Unit,
+        onEngineReady: (engine: IWallpaperEngine) -> Unit,
         onWallpaperColorsChanged:
             (colors: WallpaperColors?, displayId: Int, persistedColors: WallpaperColors?) -> Unit,
     ): WallpaperSurfaceControl.Live? {
-        val engine =
+        val connection: LiveWallpaperConnection =
             liveWallpaperConnectionUtils.connect(
                 context = context,
                 wallpaperModel = wallpaperModel,
                 forceSingleEngine = forceSingleEngine,
                 destinationFlag = destinationFlag,
-                displaySize = displaySize,
+                engineDisplaySize = engineDisplaySize,
                 windowToken = windowToken,
                 displayId = 0, // TODO(b/423956081): give a proper ID here
                 whichPreview = whichPreview,
-                onEngineCreated = onEngineCreated,
+                onEngineReady = onEngineReady,
                 onWallpaperColorsChanged = onWallpaperColorsChanged,
             )
-        return engine.mirrorSurfaceControl()?.let { surfaceControl ->
-            WallpaperSurfaceControl.Live(surfaceControl, engine)
+        return connection.wallpaperEngine.get()?.mirrorSurfaceControl()?.let {
+            WallpaperSurfaceControl.Live(it)
         }
     }
 
     private fun renderStaticWallpaperPreview(
         applicationContext: Context,
         lifecycleOwner: LifecycleOwner,
-        screen: Screen,
         viewModel: WallpaperPreviewViewModel,
         displaySize: Point,
         display: Display,
         hostToken: IBinder,
+        onDispatchTouchEventReady: (onDispatchTouchEvent: (event: MotionEvent) -> Unit) -> Unit,
     ): WallpaperSurfaceControl.Static {
         val scaleImageView =
             SubsamplingScaleImageView(applicationContext).apply {
@@ -291,7 +452,7 @@ object PreviewBinder {
                         viewModel = viewModel,
                         displaySize = displaySize,
                     )
-                    setOnDispatchTouchEvent(viewModel = viewModel, screen = screen)
+                    onDispatchTouchEventReady.invoke(getOnDispatchTouchEvent(this))
                 }
             }
         val surfaceControlViewHost =
@@ -340,27 +501,15 @@ object PreviewBinder {
         }
     }
 
-    private fun View.setOnDispatchTouchEvent(viewModel: WallpaperPreviewViewModel, screen: Screen) {
-        when (screen) {
-            Screen.LOCK_SCREEN -> {
-                viewModel.setOnLockDispatchTouchEvent { event: MotionEvent ->
-                    this.dispatchTouchEvent(event)
-                }
-            }
-            Screen.HOME_SCREEN -> {
-                viewModel.setOnHomeDispatchTouchEvent { event: MotionEvent ->
-                    this.dispatchTouchEvent(event)
-                }
-            }
-        }
+    private fun getOnDispatchTouchEvent(view: View): (event: MotionEvent) -> Unit {
+        return { event: MotionEvent -> view.dispatchTouchEvent(event) }
     }
 
-    private fun setOnDispatchTouchEventForLiveWallpapers(
-        viewModel: WallpaperPreviewViewModel,
-        screen: Screen,
-        engine: IWallpaperEngine,
-    ) {
-        val onDispatchTouchEvent: (event: MotionEvent) -> Unit = { event: MotionEvent ->
+    private fun getOnDispatchTouchEventForLiveWallpapers(
+        engine: IWallpaperEngine
+    ): (event: MotionEvent) -> Unit {
+        // TODO (b/473591862): Create unit test for forwarding touch events to live wallpaper engine
+        return { event: MotionEvent ->
             val action: Int = event.actionMasked
             val dup = MotionEvent.obtainNoHistory(event).also { it.setLocation(event.x, event.y) }
             val pointerIndex = event.actionIndex
@@ -387,14 +536,6 @@ object PreviewBinder {
                 Log.e(TAG, "Remote exception of wallpaper connection", e)
             }
         }
-        when (screen) {
-            Screen.LOCK_SCREEN -> {
-                viewModel.setOnLockDispatchTouchEvent(onDispatchTouchEvent)
-            }
-            Screen.HOME_SCREEN -> {
-                viewModel.setOnHomeDispatchTouchEvent(onDispatchTouchEvent)
-            }
-        }
     }
 
     // This is an essential callback to the live wallpaper engine to update the WallpaperDescription
@@ -418,8 +559,7 @@ object PreviewBinder {
     }
 
     private suspend fun renderWorkspacePreview(
-        screen: Screen,
-        deviceDisplayType: DeviceDisplayType,
+        previewTarget: PreviewTarget,
         wallpaperPreviewViewModel: WallpaperPreviewViewModel,
         wallpaperColorsModel: WallpaperColorsModel,
         displaySize: Point,
@@ -428,8 +568,8 @@ object PreviewBinder {
         var result: WorkspaceRenderResult? = null
         val workspacePreviewConfig: WorkspacePreviewConfigViewModel =
             wallpaperPreviewViewModel.getWorkspacePreviewConfig(
-                screen = screen,
-                deviceDisplayType = deviceDisplayType,
+                screen = previewTarget.screen,
+                deviceDisplayType = previewTarget.deviceDisplayType,
             )
         if (
             workspacePreviewConfig.previewUtils.supportsPreview() &&
@@ -555,14 +695,8 @@ object PreviewBinder {
     sealed class WallpaperSurfaceControl {
         abstract fun release()
 
-        /**
-         * @param engine We need to keep the reference of the engine to set visibility when surface
-         *   is created and destroyed.
-         */
-        data class Live(
-            val liveWallpaperSurfaceControl: SurfaceControl,
-            val engine: IWallpaperEngine,
-        ) : WallpaperSurfaceControl() {
+        data class Live(val liveWallpaperSurfaceControl: SurfaceControl) :
+            WallpaperSurfaceControl() {
             override fun release() {
                 liveWallpaperSurfaceControl.release()
             }
