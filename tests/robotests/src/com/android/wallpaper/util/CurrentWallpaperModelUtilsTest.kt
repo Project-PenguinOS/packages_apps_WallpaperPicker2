@@ -273,7 +273,7 @@ class CurrentWallpaperModelUtilsTest {
     }
 
     @Test
-    fun createStaticWallpaperModelFromWallpaperDescription() {
+    fun createStaticWallpaperModelFromWallpaperDescription_applyToHome() {
         val sourceDescription =
             WallpaperDescription.Builder()
                 .setId("id")
@@ -325,6 +325,38 @@ class CurrentWallpaperModelUtilsTest {
     }
 
     @Test
+    fun createStaticWallpaperModelFromWallpaperDescription_hasImageWallpaperData() {
+        (wallpaperModelConversionHelper as FakeWallpaperModelConversionHelper).imageUrl =
+            "https://www.google.com/image.jpg"
+        val sourceDescription =
+            WallpaperDescription.Builder()
+                .setId("id")
+                .setTitle("title")
+                .setDescription(listOf("line1", "line2"))
+                .setContextUri(Uri.parse("uri://context"))
+                .setContent(
+                    PersistableBundle().apply {
+                        putString("picker_metadata_unique_id", "uniqueId")
+                        putString("picker_metadata_collection_id", "collectionId")
+                        putInt("picker_metadata_placeholder_color", 250)
+                        putString("picker_metadata_effects", "someEffect")
+                    }
+                )
+                .build()
+
+        val wallpaperModel =
+            CurrentWallpaperModelUtils.createCurrentStaticWallpaperModelFromDescription(
+                context,
+                sourceDescription,
+                WallpaperManager.FLAG_SYSTEM,
+            ) as WallpaperModel.StaticWallpaperModel
+
+        assertThat(wallpaperModel.imageWallpaperData).isNotNull()
+        assertThat(wallpaperModel.imageWallpaperData!!.uri.toString())
+            .isEqualTo("https://www.google.com/image.jpg")
+    }
+
+    @Test
     fun createStaticWallpaperModelFromWallpaperDescription_builtInAsset() {
         (wallpaperStatusChecker as TestWallpaperStatusChecker).setHomeStaticWallpaperSet(false)
         val sourceDescription =
@@ -358,6 +390,35 @@ class CurrentWallpaperModelUtilsTest {
             .isInstanceOf(BuiltInWallpaperAsset::class.java)
         assertThat(wallpaperModel.staticWallpaperData.asset)
             .isNotInstanceOf(CurrentWallpaperAsset::class.java)
+    }
+
+    @Test
+    fun createStaticWallpaperModelFromWallpaperDescription_defaultId() {
+        val sourceDescription =
+            WallpaperDescription.Builder()
+                .setId("id")
+                .setTitle("title")
+                .setDescription(listOf("line1", "line2"))
+                .setContextUri(Uri.parse("uri://context"))
+                .setContent(
+                    PersistableBundle().apply {
+                        putInt("picker_metadata_placeholder_color", 250)
+                        putString("picker_metadata_effects", "someEffect")
+                    }
+                )
+                .build()
+
+        val wallpaperModel =
+            CurrentWallpaperModelUtils.createCurrentStaticWallpaperModelFromDescription(
+                context,
+                sourceDescription,
+                WallpaperManager.FLAG_SYSTEM,
+            ) as WallpaperModel.StaticWallpaperModel
+
+        assertThat(wallpaperModel.commonWallpaperData.id.uniqueId)
+            .isEqualTo("unknown_current_wallpaper_id" + WallpaperManager.FLAG_SYSTEM)
+        assertThat(wallpaperModel.commonWallpaperData.id.collectionId)
+            .isEqualTo("unknown_collection_id")
     }
 
     @Test

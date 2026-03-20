@@ -73,8 +73,8 @@ import com.android.wallpaper.picker.category.ui.view.providers.IndividualPickerF
 import com.android.wallpaper.picker.common.preview.data.repository.PersistentWallpaperModelRepository
 import com.android.wallpaper.picker.common.preview.ui.binder.BasePreviewBinder
 import com.android.wallpaper.picker.common.preview.ui.binder.PreviewAlphaAnimationBinder
-import com.android.wallpaper.picker.common.preview.ui.binder.WorkspaceCallbackBinder
-import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity2.ActivityEnterAnimationCallback
+import com.android.wallpaper.picker.common.preview.ui.binder.WorkspaceBinder
+import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity.ActivityEnterAnimationCallback
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationOptionsBinder
 import com.android.wallpaper.picker.customization.ui.binder.CustomizationPickerBinder2
@@ -97,9 +97,12 @@ import com.android.wallpaper.picker.data.WallpaperModel
 import com.android.wallpaper.picker.di.modules.MainDispatcher
 import com.android.wallpaper.picker.preview.ui.WallpaperPreviewActivity
 import com.android.wallpaper.picker.preview.ui.view.ClickableMotionLayout
+import com.android.wallpaper.picker.wallpapers.data.repository.CategoryWallpapersRepository
+import com.android.wallpaper.picker.wallpapers.ui.view.CategoryWallpapersFragment
 import com.android.wallpaper.util.ActivityUtils
 import com.android.wallpaper.util.CuratedPhotosTimeUtil
 import com.android.wallpaper.util.DisplayUtils
+import com.android.wallpaper.util.LaunchSourceUtils.WALLPAPER_LAUNCH_SOURCE
 import com.android.wallpaper.util.WallpaperConnection
 import com.android.wallpaper.util.converter.WallpaperModelFactory
 import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils
@@ -111,8 +114,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint(AppbarFragment::class)
-class CustomizationPickerFragment2 :
-    Hilt_CustomizationPickerFragment2(), ActivityEnterAnimationCallback {
+class CustomizationPickerFragment :
+    Hilt_CustomizationPickerFragment(), ActivityEnterAnimationCallback {
 
     @Inject lateinit var customizationOptionUtil: CustomizationOptionUtil
     @Inject lateinit var customizationOptionViewUtil: CustomizationOptionViewUtil
@@ -121,7 +124,7 @@ class CustomizationPickerFragment2 :
     @Inject lateinit var toolbarBinder: ToolbarBinder
     @Inject lateinit var colorUpdateViewModel: ColorUpdateViewModel
     @Inject lateinit var clockViewFactory: ClockViewFactory
-    @Inject lateinit var workspaceCallbackBinder: WorkspaceCallbackBinder
+    @Inject lateinit var workspaceBinder: WorkspaceBinder
     @Inject lateinit var displayUtils: DisplayUtils
     @Inject lateinit var wallpaperConnectionUtils: WallpaperConnectionUtils
     @Inject lateinit var persistentWallpaperModelRepository: PersistentWallpaperModelRepository
@@ -133,6 +136,7 @@ class CustomizationPickerFragment2 :
     @Inject lateinit var wallpaperModelFactory: WallpaperModelFactory
     @Inject lateinit var myPhotosStarterImpl: MyPhotosStarterImpl
     @Inject lateinit var iconStyleViewUtil: IconStyleViewUtil
+    @Inject lateinit var categoryWallpapersRepository: CategoryWallpapersRepository
 
     private val customizationPickerViewModel: CustomizationPickerViewModel2 by viewModels()
 
@@ -198,12 +202,14 @@ class CustomizationPickerFragment2 :
                                 shouldNavigateToExtendedWallpaperEffects = true,
                                 isViewAsHome = true,
                                 requestCode =
-                                    CustomizationPickerActivity2
+                                    CustomizationPickerActivity
                                         .VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE,
                                 isMultiPanesEnabled =
                                     multiPanesChecker.isMultiPanesEnabled(requireContext()),
                                 setWallpaperEntryPoint =
                                     StyleEnums.SET_WALLPAPER_ENTRY_POINT_WALLPAPER_PREVIEW,
+                                wallpaperLaunchSource =
+                                    arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "",
                             )
                         }
                     }
@@ -425,7 +431,7 @@ class CustomizationPickerFragment2 :
                 )
 
             view.post {
-                if (this@CustomizationPickerFragment2.view == null) return@post
+                if (this@CustomizationPickerFragment.view == null) return@post
                 // Post to wait for the essential view dimensions to be obtained, to further
                 // calculate the motion scene dimensions.
                 if (!isDesktopUi) {
@@ -796,7 +802,9 @@ class CustomizationPickerFragment2 :
             navigateToWallpaperCategoriesScreen = { _ ->
                 switchFragment(
                     CategoriesFragment.newInstance(
-                        destinationScreen = customizationPickerViewModel.selectedPreviewScreen.value
+                        destinationScreen =
+                            customizationPickerViewModel.selectedPreviewScreen.value,
+                        wallpaperLaunchSource = arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "",
                     )
                 )
             },
@@ -819,29 +827,37 @@ class CustomizationPickerFragment2 :
                     shouldNavigateToExtendedWallpaperEffects = false,
                     isViewAsHome = !isDesktopUi,
                     requestCode =
-                        CustomizationPickerActivity2.VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE,
+                        CustomizationPickerActivity.VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE,
                     isMultiPanesEnabled = multiPanesChecker.isMultiPanesEnabled(requireContext()),
                     setWallpaperEntryPoint = setEntryPoint,
+                    wallpaperLaunchSource = arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "",
                 )
             },
             navigateToPackThemeActivity = { intent -> context?.startActivity(intent) },
             navigateToScreenSaverSettingsActivity = {
                 activity?.startActivity(Intent(Settings.ACTION_DREAM_SETTINGS))
             },
-            navigateToWallpaperCollectionScreen = { categoryId, categoryType ->
-                switchFragment(
-                    individualPickerFactory.getIndividualPickerInstance(
-                        categoryId,
-                        categoryType,
-                        customizationPickerViewModel.selectedPreviewScreen.value,
+            navigateToWallpaperCollectionScreen = { categoryModel, categoryType ->
+                if (BaseFlags.get(requireContext()).isWallpapersFragmentEnabled()) {
+                    categoryWallpapersRepository.setSelectedCategory(category = categoryModel)
+                    switchFragment(CategoryWallpapersFragment())
+                } else {
+                    switchFragment(
+                        individualPickerFactory.getIndividualPickerInstance(
+                            categoryModel.commonCategoryData.collectionId,
+                            categoryType,
+                            customizationPickerViewModel.selectedPreviewScreen.value,
+                        )
                     )
-                )
+                }
             },
             navigateToExtendedWallpaperEffects = {
                 if (BaseFlags.get(pickerMotionContainer.context).isPhotoPickerEnabled()) {
                     switchFragment(
                         PhotoPickerFragment.newInstance(
-                            shouldNavigateToExtendedWallpaperEffects = true
+                            shouldNavigateToExtendedWallpaperEffects = true,
+                            wallpaperLaunchSource =
+                                arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "",
                         )
                     )
                 } else {
@@ -1106,7 +1122,7 @@ class CustomizationPickerFragment2 :
             view = previewCard,
             viewModel = customizationPickerViewModel,
             colorUpdateViewModel = colorUpdateViewModel,
-            workspaceCallbackBinder = workspaceCallbackBinder,
+            workspaceBinder = workspaceBinder,
             screen = screen,
             deviceDisplayType = displayUtils.getCurrentDisplayType(activity),
             displaySize =
@@ -1128,6 +1144,7 @@ class CustomizationPickerFragment2 :
                         // Hide info sheet for current wallpapers because attribution is not
                         // updated when language updates, see b/418619944
                         .hideInfoSheet(true)
+                        .wallpaperLaunchSource(arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "")
                         .build()
                 )
             },
