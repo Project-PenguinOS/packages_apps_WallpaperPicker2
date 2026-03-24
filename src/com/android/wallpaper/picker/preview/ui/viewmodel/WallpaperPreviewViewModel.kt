@@ -26,6 +26,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.customization.picker.clock.shared.ClockSize
+import com.android.wallpaper.config.BaseFlags
 import com.android.wallpaper.model.Screen
 import com.android.wallpaper.model.Screen.HOME_SCREEN
 import com.android.wallpaper.model.Screen.LOCK_SCREEN
@@ -155,6 +156,8 @@ constructor(
                 ),
             )
 
+    val isDesktopUi = BaseFlags.get(context).shouldShowDesktopUi(context)
+
     val staticWallpaperPreviewViewModel =
         staticWallpaperPreviewViewModelFactory.create(viewModelScope)
 
@@ -257,6 +260,14 @@ constructor(
                     UNFOLDED -> isHomeUnfoldedPreviewReady.value = isReady
                 }
         }
+    }
+
+    // Set readiness to false for all previews.
+    fun resetPreviews() {
+        isLockPreviewReady.value = false
+        isLockUnfoldedPreviewReady.value = false
+        isHomePreviewReady.value = false
+        isHomeUnfoldedPreviewReady.value = false
     }
 
     private val lockPreviewShadeAlpha: StateFlow<Float> =

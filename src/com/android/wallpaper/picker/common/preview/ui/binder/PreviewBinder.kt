@@ -20,6 +20,7 @@ import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.app.wallpaper.WallpaperDescription
 import android.content.Context
+import android.graphics.Matrix
 import android.graphics.Point
 import android.os.Bundle
 import android.os.IBinder
@@ -28,6 +29,7 @@ import android.os.RemoteException
 import android.service.wallpaper.IWallpaperEngine
 import android.util.Log
 import android.view.Display
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.SurfaceControl
 import android.view.SurfaceControlViewHost
@@ -38,15 +40,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.android.wallpaper.R
 import com.android.wallpaper.model.Screen.HOME_SCREEN
 import com.android.wallpaper.model.Screen.LOCK_SCREEN
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType.FOLDED
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType.SINGLE
 import com.android.wallpaper.model.wallpaper.DeviceDisplayType.UNFOLDED
+import com.android.wallpaper.picker.common.preview.ui.binder.DefaultWorkspaceCallbackBinder.Companion.MESSAGE_ID_DESTROY_PREVIEW
+import com.android.wallpaper.picker.common.preview.ui.binder.WorkspaceCallbackBinder.Companion.sendMessage
 import com.android.wallpaper.picker.customization.shared.model.WallpaperColorsModel
 import com.android.wallpaper.picker.customization.shared.model.WallpaperDestination.Companion.toSetWallpaperFlags
 import com.android.wallpaper.picker.data.WallpaperModel
@@ -72,8 +78,10 @@ import java.lang.Integer.min
 import kotlin.coroutines.resume
 import kotlin.math.max
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 
@@ -238,7 +246,7 @@ object PreviewBinder {
         )
     }
 
-    private fun bind(
+    fun bind(
         preview: SurfaceView,
         viewModel: WallpaperPreviewViewModel,
         applicationContext: Context,
@@ -250,17 +258,25 @@ object PreviewBinder {
         windowToken: IBinder,
         liveWallpaperConnectionUtils: LiveWallpaperConnectionUtils,
         onDispatchTouchEventReady: (onDispatchTouchEvent: (event: MotionEvent) -> Unit) -> Unit,
+        wallpaperPreviewOnly: Boolean = false,
     ): PreviewBinding {
+        var workspaceCallback: Message? = null
         val wallpaperSurfaceControl: MutableStateFlow<WallpaperSurfaceControl?> =
             MutableStateFlow(null)
         val workspaceSurfaceControl: MutableStateFlow<SurfaceControl?> = MutableStateFlow(null)
         var surfaceViewCallback: SurfaceViewUtils.SurfaceCallback? = null
 
-        fun releasePreview() {
-            wallpaperSurfaceControl.value?.release()
-            wallpaperSurfaceControl.value = null
+        fun cleanupWorkspacePreview() {
+            workspaceCallback?.sendMessage(MESSAGE_ID_DESTROY_PREVIEW, Bundle())
+            workspaceCallback = null
             workspaceSurfaceControl.value?.release()
             workspaceSurfaceControl.value = null
+        }
+
+        fun releasePreview() {
+            cleanupWorkspacePreview()
+            wallpaperSurfaceControl.value?.release()
+            wallpaperSurfaceControl.value = null
             surfaceViewCallback?.let { preview.holder.removeCallback(it) }
             surfaceViewCallback = null
         }
@@ -285,6 +301,7 @@ object PreviewBinder {
                                     context = applicationContext,
                                     wallpaperModel = wallpaper,
                                     forceSingleEngine = forceSingleEngine,
+                                    displaySize = displaySize,
                                     engineDisplaySize =
                                         displaySizes.getEngineDisplaySize(
                                             displayType = previewTarget.deviceDisplayType,
@@ -301,15 +318,17 @@ object PreviewBinder {
                                             .addOnWindowVisibilityChangeListener { visibility ->
                                                 engine.trySetIsVisible(visibility == View.VISIBLE)
                                             }
-                                        // Set up on dispatch touch event
-                                        onDispatchTouchEventReady.invoke(
-                                            getOnDispatchTouchEventForLiveWallpapers(engine)
-                                        )
-                                        // Set up on apply live wallpaper callback
-                                        setOnApplyLiveWallpaper(
-                                            viewModel = viewModel,
-                                            engine = engine,
-                                        )
+                                        if (!wallpaperPreviewOnly) {
+                                            // Set up on dispatch touch event
+                                            onDispatchTouchEventReady.invoke(
+                                                getOnDispatchTouchEventForLiveWallpapers(engine)
+                                            )
+                                            // Set up on apply live wallpaper callback
+                                            setOnApplyLiveWallpaper(
+                                                viewModel = viewModel,
+                                                engine = engine,
+                                            )
+                                        }
                                     },
                                     onWallpaperColorsChanged = { colors, displayId, persistedColors
                                         ->
@@ -340,28 +359,31 @@ object PreviewBinder {
                 // TODO(b/423956081): Listen to preferredClockSize and enforce lock screen workspace
                 //   preview to show correspondent clock.
                 launch {
-                    viewModel.wallpaperColorsModel.collect { wallpaperColorsModel ->
-                        if (workspaceSurfaceControl.value == null) {
-                            // Create SurfaceControl for the workspace
-                            val workspaceRenderResult: WorkspaceRenderResult? =
-                                renderWorkspacePreview(
-                                    previewTarget = previewTarget,
-                                    wallpaperPreviewViewModel = viewModel,
-                                    wallpaperColorsModel = wallpaperColorsModel,
-                                    displaySize = displaySize,
-                                    hostToken = hostToken,
-                                )
-                            workspaceSurfaceControl.value = workspaceRenderResult?.surfaceControl
-                        } else {
-                            // TODO (b/423956081): Use callback messages to update the color.
-                        }
+                    viewModel.wallpaperColorsModel.collectLatest { wallpaperColorsModel ->
+                        // TODO(b/423956081): To improve preview update quality, we should send
+                        //  messages to workspaceCallback to update colors instead of recreating
+                        //  a workspace render.
+                        cleanupWorkspacePreview()
+                        // TODO(b/485520081): Cancel the rendering of the preview when the coroutine
+                        //  job is cancelled.
+                        val workspaceRenderResult: WorkspaceRenderResult? =
+                            renderWorkspacePreview(
+                                previewTarget = previewTarget,
+                                wallpaperPreviewViewModel = viewModel,
+                                wallpaperColorsModel = wallpaperColorsModel,
+                                displaySize = displaySize,
+                                hostToken = hostToken,
+                            )
+                        workspaceCallback = workspaceRenderResult?.callback
+                        workspaceSurfaceControl.value = workspaceRenderResult?.surfaceControl
                     }
                 }
 
                 launch {
                     combine(
                             wallpaperSurfaceControl.filterNotNull(),
-                            workspaceSurfaceControl.filterNotNull(),
+                            if (wallpaperPreviewOnly) flowOf(null)
+                            else workspaceSurfaceControl.filterNotNull(),
                             ::Pair,
                         )
                         .collect { (wallpaperSurfaceControl, workspaceSurfaceControl) ->
@@ -370,7 +392,9 @@ object PreviewBinder {
                                 object : SurfaceViewUtils.SurfaceCallback {
                                         override fun surfaceCreated(holder: SurfaceHolder) {
                                             preview.reparentWallpaper(wallpaperSurfaceControl)
-                                            preview.reparentWorkspace(workspaceSurfaceControl)
+                                            if (workspaceSurfaceControl != null) {
+                                                preview.reparentWorkspace(workspaceSurfaceControl)
+                                            }
                                             viewModel.setPreviewReady2(
                                                 previewTarget = previewTarget,
                                                 isReady = true,
@@ -379,14 +403,19 @@ object PreviewBinder {
                                     }
                                     .also { surfaceViewCallback = it }
                             )
-
-                            // This is a workaround to force trigger a surfaceCreated from the
-                            // SurfaceView, where the reparent transactions can work the most
-                            // reliably.
-                            val parentView: ViewGroup? = preview.parent as? ViewGroup
-                            parentView?.let {
-                                it.removeView(preview)
-                                it.addView(preview)
+                            if (!preview.isVisible) {
+                                // When SurfaceView turns from not visible to visible,
+                                // it will trigger surfaceCreated.
+                                preview.isVisible = true
+                            } else {
+                                // This is a workaround to force trigger a surfaceCreated from the
+                                // SurfaceView, where the reparent transactions can work the most
+                                // reliably.
+                                val parentView: ViewGroup? = preview.parent as? ViewGroup
+                                parentView?.let {
+                                    it.removeView(preview)
+                                    it.addView(preview)
+                                }
                             }
                         }
                 }
@@ -405,6 +434,7 @@ object PreviewBinder {
         context: Context,
         wallpaperModel: LiveWallpaperModel,
         forceSingleEngine: Boolean,
+        displaySize: Point,
         engineDisplaySize: Point,
         whichPreview: WhichPreview,
         windowToken: IBinder,
@@ -428,7 +458,12 @@ object PreviewBinder {
                 onWallpaperColorsChanged = onWallpaperColorsChanged,
             )
         return connection.wallpaperEngine.get()?.mirrorSurfaceControl()?.let {
-            WallpaperSurfaceControl.Live(it)
+            WallpaperSurfaceControl.Live(
+                liveWallpaperSurfaceControl = it,
+                forceSingleEngine = forceSingleEngine,
+                displaySize = displaySize,
+                engineDisplaySize = engineDisplaySize,
+            )
         }
     }
 
@@ -441,29 +476,42 @@ object PreviewBinder {
         hostToken: IBinder,
         onDispatchTouchEventReady: (onDispatchTouchEvent: (event: MotionEvent) -> Unit) -> Unit,
     ): WallpaperSurfaceControl.Static {
-        val scaleImageView =
-            SubsamplingScaleImageView(applicationContext).apply {
-                setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CUSTOM)
-                setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
-
-                if (viewModel.wallpaper.value?.isCroppable() == true) {
-                    initCrop(
-                        applicationContext = applicationContext,
-                        viewModel = viewModel,
-                        displaySize = displaySize,
-                    )
-                    onDispatchTouchEventReady.invoke(getOnDispatchTouchEvent(this))
+        val scale: Float = WallpaperCropUtils.getSystemWallpaperMaximumScale(applicationContext)
+        val scaleImageViewSize =
+            Point((displaySize.x * scale).toInt(), (displaySize.y * scale).toInt())
+        val staticWallpaperPreview =
+            LayoutInflater.from(applicationContext).inflate(R.layout.static_wallpaper_preview, null)
+        val scaleImageView: SubsamplingScaleImageView =
+            staticWallpaperPreview.requireViewById(R.id.static_image_view)
+        scaleImageView.apply {
+            layoutParams =
+                scaleImageView.layoutParams.apply {
+                    width = scaleImageViewSize.x
+                    height = scaleImageViewSize.y
                 }
+            setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CUSTOM)
+            setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
+
+            if (viewModel.wallpaper.value?.isCroppable() == true) {
+                initCrop(
+                    applicationContext = applicationContext,
+                    viewModel = viewModel,
+                    displaySize = displaySize,
+                    scaleImageViewSize = scaleImageViewSize,
+                )
+                onDispatchTouchEventReady.invoke(getOnDispatchTouchEvent(this))
             }
+        }
         val surfaceControlViewHost =
             SurfaceControlViewHost(applicationContext, display, hostToken).apply {
-                setView(scaleImageView, displaySize.x, displaySize.y)
+                setView(staticWallpaperPreview, displaySize.x, displaySize.y)
             }
         StaticWallpaperPreviewBinder2.bind(
             applicationContext = applicationContext,
             scaleImageView = scaleImageView,
             viewModel = viewModel.staticWallpaperPreviewViewModel,
             displaySize = displaySize,
+            scaleImageViewSize = scaleImageViewSize,
             lifecycleOwner = lifecycleOwner,
         )
         // TODO(b/423956081): PreviewEffectsLoadingBinder to bind loading effect
@@ -474,18 +522,17 @@ object PreviewBinder {
         applicationContext: Context,
         viewModel: WallpaperPreviewViewModel,
         displaySize: Point,
+        scaleImageViewSize: Point,
     ) {
         this.doOnLayout {
-            val imageSize = Point(this.width, this.height)
-            val cropImageSize =
+            val cropImageSize: Point =
                 WallpaperCropUtils.calculateCropSurfaceSize(
                     applicationContext.resources,
-                    max(imageSize.x, imageSize.y),
-                    min(imageSize.x, imageSize.y),
-                    imageSize.x,
-                    imageSize.y,
+                    max(scaleImageViewSize.x, scaleImageViewSize.y),
+                    min(scaleImageViewSize.x, scaleImageViewSize.y),
+                    scaleImageViewSize.x,
+                    scaleImageViewSize.y,
                 )
-
             this.setOnNewCropListener { crop, zoom ->
                 viewModel.staticWallpaperPreviewViewModel.fullPreviewCropModels[displaySize] =
                     FullPreviewCropModel(
@@ -493,7 +540,7 @@ object PreviewBinder {
                         cropSizeModel =
                             CropSizeModel(
                                 wallpaperZoom = zoom,
-                                hostViewSize = imageSize,
+                                hostViewSize = scaleImageViewSize,
                                 cropViewSize = cropImageSize,
                             ),
                     )
@@ -618,7 +665,12 @@ object PreviewBinder {
     private fun SurfaceView.reparentWallpaper(wallpaperSurfaceControl: WallpaperSurfaceControl) {
         when (wallpaperSurfaceControl) {
             is WallpaperSurfaceControl.Live -> {
-                reparentLiveWallpaper(wallpaperSurfaceControl.liveWallpaperSurfaceControl)
+                reparentLiveWallpaper(
+                    surfaceControl = wallpaperSurfaceControl.liveWallpaperSurfaceControl,
+                    forceSingleEngine = wallpaperSurfaceControl.forceSingleEngine,
+                    displaySize = wallpaperSurfaceControl.displaySize,
+                    engineDisplaySize = wallpaperSurfaceControl.engineDisplaySize,
+                )
             }
             is WallpaperSurfaceControl.Static -> {
                 reparentStaticWallpaper(
@@ -628,7 +680,12 @@ object PreviewBinder {
         }
     }
 
-    private fun SurfaceView.reparentLiveWallpaper(surfaceControl: SurfaceControl) {
+    private fun SurfaceView.reparentLiveWallpaper(
+        surfaceControl: SurfaceControl,
+        forceSingleEngine: Boolean,
+        displaySize: Point,
+        engineDisplaySize: Point,
+    ) {
         val surfaceViewRootSurfaceControl = this.rootSurfaceControl
         if (surfaceViewRootSurfaceControl == null) {
             Log.w(
@@ -638,12 +695,32 @@ object PreviewBinder {
             )
             return
         }
+        val reparentScale: FloatArray = getReparentScale(displaySize, engineDisplaySize)
         val transaction =
             SurfaceControl.Transaction()
+                .setMatrix(
+                    surfaceControl,
+                    if (forceSingleEngine) reparentScale[Matrix.MSCALE_Y]
+                    else reparentScale[Matrix.MSCALE_X],
+                    reparentScale[Matrix.MSKEW_X],
+                    reparentScale[Matrix.MSKEW_Y],
+                    reparentScale[Matrix.MSCALE_Y],
+                )
                 .reparent(surfaceControl, this.surfaceControl)
                 .setLayer(surfaceControl, 0)
                 .show(surfaceControl)
         surfaceViewRootSurfaceControl.applyTransactionOnDraw(transaction)
+    }
+
+    private fun getReparentScale(displaySize: Point, engineDisplaySize: Point): FloatArray {
+        val metrics = Matrix()
+        val values = FloatArray(9)
+        metrics.postScale(
+            displaySize.x.toFloat() / engineDisplaySize.x,
+            displaySize.y.toFloat() / engineDisplaySize.y,
+        )
+        metrics.getValues(values)
+        return values
     }
 
     private fun SurfaceView.reparentStaticWallpaper(
@@ -695,8 +772,12 @@ object PreviewBinder {
     sealed class WallpaperSurfaceControl {
         abstract fun release()
 
-        data class Live(val liveWallpaperSurfaceControl: SurfaceControl) :
-            WallpaperSurfaceControl() {
+        data class Live(
+            val liveWallpaperSurfaceControl: SurfaceControl,
+            val forceSingleEngine: Boolean,
+            val displaySize: Point,
+            val engineDisplaySize: Point,
+        ) : WallpaperSurfaceControl() {
             override fun release() {
                 liveWallpaperSurfaceControl.release()
             }
