@@ -16,7 +16,6 @@
 package com.android.wallpaper.picker.common.preview.ui.binder
 
 import android.app.WallpaperColors
-import android.graphics.Rect
 import android.os.Bundle
 import android.os.Message
 import android.util.Log
@@ -156,14 +155,12 @@ object WorkspacePreviewBinder {
             // size of the view and the other represents the size of the surface. When requesting a
             // preview, make sure to specify the width and height in the bundle so we are using the
             // surface size and not the view size.
-            val surfacePosition: Rect = surfaceView.holder.surfaceFrame
-            val orientation: Int = surfaceView.context.resources.configuration.orientation
+            val surfacePosition = surfaceView.holder.surfaceFrame
             val extras =
                 bundleOf(
                         Pair(SurfaceViewUtils.KEY_DISPLAY_ID, displayId),
                         Pair(SurfaceViewUtils.KEY_VIEW_WIDTH, surfacePosition.width()),
                         Pair(SurfaceViewUtils.KEY_VIEW_HEIGHT, surfacePosition.height()),
-                        Pair(SurfaceViewUtils.KEY_ORIENTATION, orientation),
                     )
                     .apply {
                         if (screen == Screen.LOCK_SCREEN) {
