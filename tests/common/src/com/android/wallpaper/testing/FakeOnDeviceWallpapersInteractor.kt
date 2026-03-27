@@ -37,17 +37,17 @@ class FakeOnDeviceWallpapersInteractor @Inject constructor() : OnDeviceWallpaper
     companion object {
         val fakeOnDeviceWallpapers =
             listOf(
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "testId1",
                     collectionId = "testCollection1",
                     title = "onDeviceTitle1",
                 ),
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "testId2",
                     collectionId = "testCollection3",
                     title = "onDeviceTitle2",
                 ),
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "testId3",
                     collectionId = "testCollection3",
                     title = "onDeviceTitle3",

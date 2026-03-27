@@ -20,7 +20,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.wallpaper.module.WallpaperPreferences
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelUtils.Companion.getStaticWallpaperModel
+import com.android.wallpaper.testing.WallpaperModelTestUtils.Companion.getStaticWallpaperModel
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltTestApplication
 import kotlinx.coroutines.CoroutineDispatcher
@@ -60,10 +60,7 @@ class WallpaperPreviewRepositoryTest {
         underTest = WallpaperPreviewRepository(preferences = prefs)
 
         val wallpaperModel =
-            getStaticWallpaperModel(
-                wallpaperId = "aaa",
-                collectionId = "testCollection",
-            )
+            getStaticWallpaperModel(wallpaperId = "aaa", collectionId = "testCollection")
         assertThat(underTest.wallpaperModel.value).isNull()
 
         underTest.setWallpaperModel(wallpaperModel)

@@ -32,7 +32,7 @@ import com.android.wallpaper.testing.FakeImageEffectsRepository
 import com.android.wallpaper.testing.FakeLiveWallpaperDownloader
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -173,7 +173,7 @@ class PreviewActionsInteractorTest {
                     serviceInfo.flags = PackageManager.GET_META_DATA
                 },
             )
-        return WallpaperModelUtils.getLiveWallpaperModel(
+        return WallpaperModelTestUtils.getLiveWallpaperModel(
             wallpaperId = "uniqueId",
             collectionId = "collectionId",
             systemWallpaperInfo = wallpaperInfo,

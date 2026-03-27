@@ -35,13 +35,13 @@ import com.android.wallpaper.module.InjectorProvider
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.WallpaperInfoUtils
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getCollectionId
 import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getEffects
+import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getImageUrl
 import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getPlaceHolderColor
 import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getUniqueId
 import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.updateMetadata
-import com.android.wallpaper.util.WallpaperDescriptionUtils.Companion.getImageUrl
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -143,7 +143,7 @@ class WallpaperDescriptionUtilsTest {
                 .build()
         val wallpaperInfo = WallpaperInfoUtils.createWallpaperInfo(context, componentName)
         val liveWallpaperModel =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = "uniqueId",
                 collectionId = "collectionId",
                 systemWallpaperInfo = wallpaperInfo,
@@ -179,7 +179,7 @@ class WallpaperDescriptionUtilsTest {
             WallpaperDescription.Builder().setComponent(componentName).setId("id").build()
         val wallpaperInfo = WallpaperInfoUtils.createWallpaperInfo(context, componentName)
         val liveWallpaperModel =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = "uniqueId",
                 collectionId = "collectionId",
                 systemWallpaperInfo = wallpaperInfo,
@@ -208,7 +208,7 @@ class WallpaperDescriptionUtilsTest {
         val contextUri = Uri.parse("uri://context")
         val cropRect = Rect(1, 2, 3, 4)
         val staticWallpaperModel =
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "uniqueId",
                 collectionId = "collectionId",
                 title = "ignored",

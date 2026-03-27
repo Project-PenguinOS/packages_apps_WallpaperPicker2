@@ -186,7 +186,7 @@ class FakeWallpaperClient @Inject constructor() : WallpaperClient {
     override suspend fun getCurrentWallpaperModels(forceRefresh: Boolean): WallpaperModelsPair {
         return WallpaperModelsPair(
             wallpapersSet[WallpaperDestination.HOME]
-                ?: (WallpaperModelUtils.getStaticWallpaperModel(
+                ?: (WallpaperModelTestUtils.getStaticWallpaperModel(
                         wallpaperId = "defaultWallpaperId",
                         collectionId = "defaultCollection",
                     )

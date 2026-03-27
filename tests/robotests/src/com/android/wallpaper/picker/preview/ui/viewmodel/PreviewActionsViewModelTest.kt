@@ -49,7 +49,7 @@ import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestPackageStatusNotifier
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils
 import com.google.common.truth.Truth.assertThat
@@ -159,7 +159,7 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun informationClicked_preparesInformationFloatingSheet() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
 
         // Simulate click of info button
@@ -171,7 +171,7 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun isInformationVisible_checksIfInformationButtonIsVisible() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
 
         val isInformationButtonVisible = collectLastValue(underTest.isInformationVisible)
@@ -180,7 +180,7 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun isInformationVisible_invisibleWhenHideInformationSheetIsTrue() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
         underTest.hideInformationFloatingSheet.value = true
 
@@ -190,13 +190,13 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun isInformationVisible_invisibleWhenActionUrlNull() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
 
         val isInformationButtonVisible = collectLastValue(underTest.isInformationVisible)
 
         wallpaperPreviewRepository.setWallpaperModel(
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 "testId",
                 "testCollection",
                 actionUrl = null,
@@ -208,13 +208,13 @@ class PreviewActionsViewModelTest {
     @Test
     @EnableFlags(com.android.systemui.shared.Flags.FLAG_EXTENDED_WALLPAPER_EFFECTS)
     fun isInformationVisible_invisibleWhenValidUri() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
 
         val isInformationButtonVisible = collectLastValue(underTest.isInformationVisible)
 
         wallpaperPreviewRepository.setWallpaperModel(
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 "testId",
                 "testCollection",
                 imageWallpaperUri = Uri.parse("test"),
@@ -225,7 +225,7 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun isInformationChecked_checksIfInformationButtonIsChecked() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
 
         val isInformationButtonChecked = collectLastValue(underTest.isInformationChecked)
@@ -238,7 +238,7 @@ class PreviewActionsViewModelTest {
 
     @Test
     fun imageEffectSet_preparesImageEffectFloatingSheet() = runTest {
-        val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
+        val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
         wallpaperPreviewRepository.setWallpaperModel(model)
         val effect =
             Effect(id = 1, title = "test effect", type = FakeEffectsController.Effect.FAKE_EFFECT)
@@ -283,7 +283,7 @@ class PreviewActionsViewModelTest {
             }
         val wallpaperInfo = WallpaperInfo(appContext, resolveInfo)
         val liveWallpaperModel =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = "testWallpaperId",
                 collectionId = "testCollection",
                 systemWallpaperInfo = wallpaperInfo,

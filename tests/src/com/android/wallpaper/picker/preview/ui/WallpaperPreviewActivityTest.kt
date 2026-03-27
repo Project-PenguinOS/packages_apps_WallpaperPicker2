@@ -26,7 +26,7 @@ import com.android.wallpaper.picker.common.preview.data.repository.PersistentWal
 import com.android.wallpaper.picker.preview.data.repository.WallpaperPreviewRepository
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestStaticWallpaperInfo
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -116,7 +116,7 @@ class WallpaperPreviewActivityTest {
     @Test
     fun modelFromPersistentRepository_isCorrect() {
         val requestedModel =
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "wallpaperId",
                 collectionId = "collectionId",
             )
@@ -142,7 +142,7 @@ class WallpaperPreviewActivityTest {
     @Test
     fun modelIsCorrect_afterRecreate() {
         val requestedModel =
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "wallpaperId",
                 collectionId = "collectionId",
             )
@@ -170,7 +170,7 @@ class WallpaperPreviewActivityTest {
     @Test
     fun showsToastWhenMissingWallpaper() {
         val model =
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "wallpaperId",
                 collectionId = "collectionId",
             )
