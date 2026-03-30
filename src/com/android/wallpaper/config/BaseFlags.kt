@@ -33,7 +33,6 @@ import com.android.wallpaper.Flags.enableAndroidPhotopicker
 import com.android.wallpaper.Flags.enablePackThemeEntry
 import com.android.wallpaper.Flags.enableRecentWallpaperDeletion
 import com.android.wallpaper.Flags.enableRecentsDeletionViaProvider
-import com.android.wallpaper.Flags.fullscreenPreviewFlag
 import com.android.wallpaper.Flags.fullscreenPreviewFlowFix
 import com.android.wallpaper.Flags.newCreativeWallpaperCategory
 import com.android.wallpaper.Flags.proactiveSuggestions
@@ -161,7 +160,7 @@ abstract class BaseFlags {
     }
 
     open fun isFullscreenPreviewEnabled(context: Context): Boolean {
-        return fullscreenPreviewFlag() && DesktopState.fromContext(context).canEnterDesktopMode
+        return DesktopState.fromContext(context).canEnterDesktopMode
     }
 
     open fun isFullscreenPreviewFlowFixEnabled(context: Context): Boolean {
