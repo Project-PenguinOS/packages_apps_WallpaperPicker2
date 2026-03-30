@@ -57,7 +57,7 @@ import com.android.wallpaper.picker.category.ui.view.providers.IndividualPickerF
 import com.android.wallpaper.picker.category.ui.viewmodel.CategoriesViewModel
 import com.android.wallpaper.picker.common.preview.data.repository.PersistentWallpaperModelRepository
 import com.android.wallpaper.picker.customization.shared.model.CategoryType
-import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity2
+import com.android.wallpaper.picker.customization.ui.CustomizationPickerActivity
 import com.android.wallpaper.picker.customization.ui.binder.ColorUpdateBinder
 import com.android.wallpaper.picker.customization.ui.viewmodel.ColorUpdateViewModel
 import com.android.wallpaper.picker.data.WallpaperModel
@@ -65,6 +65,7 @@ import com.android.wallpaper.picker.wallpapers.data.repository.CategoryWallpaper
 import com.android.wallpaper.picker.wallpapers.ui.view.CategoryWallpapersFragment
 import com.android.wallpaper.util.ActivityUtils
 import com.android.wallpaper.util.CuratedPhotosTimeUtil
+import com.android.wallpaper.util.LaunchSourceUtils.WALLPAPER_LAUNCH_SOURCE
 import com.android.wallpaper.util.SizeCalculator
 import com.android.wallpaper.util.converter.WallpaperModelFactory
 import com.google.android.material.appbar.AppBarLayout
@@ -267,9 +268,10 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
             isCreativeCategories = isCreativeCategories,
             shouldNavigateToExtendedWallpaperEffects = shouldNavigateToExtendedWallpaperEffects,
             isViewAsHome = isDestinationHome,
-            requestCode = CustomizationPickerActivity2.VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE,
+            requestCode = CustomizationPickerActivity.VIEW_ONLY_PREVIEW_WALLPAPER_REQUEST_CODE,
             isMultiPanesEnabled = multiPanesChecker.isMultiPanesEnabled(requireContext()),
             setWallpaperEntryPoint = setWallpaperEntryPoint,
+            wallpaperLaunchSource = arguments?.getString(WALLPAPER_LAUNCH_SOURCE) ?: "",
         )
     }
 
@@ -384,10 +386,16 @@ class CategoriesFragment : Hilt_CategoriesFragment() {
 
         private const val DESTINATION_SCREEN = "destination_screen"
 
-        fun newInstance(destinationScreen: Screen): CategoriesFragment {
+        fun newInstance(
+            destinationScreen: Screen,
+            wallpaperLaunchSource: String,
+        ): CategoriesFragment {
             return CategoriesFragment().apply {
                 arguments =
-                    Bundle().apply { putSerializable(DESTINATION_SCREEN, destinationScreen) }
+                    Bundle().apply {
+                        putSerializable(DESTINATION_SCREEN, destinationScreen)
+                        putString(WALLPAPER_LAUNCH_SOURCE, wallpaperLaunchSource)
+                    }
             }
         }
     }
