@@ -65,7 +65,7 @@ class FakeLiveWallpaperClientImpl @Inject constructor() : LiveWallpapersClient {
                 },
             )
         val liveWallpaperModel =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = "unused",
                 collectionId = "collectionId",
                 systemWallpaperInfo = wallpaperInfo,

@@ -37,7 +37,7 @@ import com.android.wallpaper.picker.data.WallpaperId
 import com.android.wallpaper.picker.data.WallpaperModel
 import com.android.wallpaper.util.converter.WallpaperModelFactory
 
-class WallpaperModelUtils {
+class WallpaperModelTestUtils {
     companion object {
         const val SAMPLE_TITLE1 = "wallpaper-1"
         const val SAMPLE_TITLE2 = "wallpaper-2"
@@ -109,6 +109,7 @@ class WallpaperModelUtils {
             creativeWallpaperData: CreativeWallpaperData? = null,
             description: WallpaperDescription =
                 WallpaperDescription.Builder().setComponent(systemWallpaperInfo.component).build(),
+            supportsMultipleEngines: Boolean = false,
         ): WallpaperModel.LiveWallpaperModel {
             return WallpaperModel.LiveWallpaperModel(
                 commonWallpaperData =
@@ -130,6 +131,7 @@ class WallpaperModelUtils {
                         isEffectWallpaper = effectNames != null,
                         effectNames = effectNames,
                         description = description,
+                        supportsMultipleEngines = supportsMultipleEngines,
                     ),
                 creativeWallpaperData = creativeWallpaperData,
                 internalLiveWallpaperData = null,

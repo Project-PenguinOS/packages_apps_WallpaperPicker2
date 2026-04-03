@@ -34,7 +34,7 @@ import com.android.wallpaper.testing.FakeContentProvider.Companion.FAKE_EFFECT_I
 import com.android.wallpaper.testing.FakeContentProvider.Companion.FAKE_EFFECT_TITLE
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.WallpaperInfoUtils
-import com.android.wallpaper.testing.WallpaperModelUtils.Companion.getStaticWallpaperModel
+import com.android.wallpaper.testing.WallpaperModelTestUtils.Companion.getStaticWallpaperModel
 import com.android.wallpaper.testing.collectLastValue
 import com.android.wallpaper.widget.floatingsheetcontent.WallpaperEffectsView2
 import com.google.common.truth.Truth.assertThat
