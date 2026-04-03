@@ -36,7 +36,7 @@ import com.android.wallpaper.module.InjectorProvider
 import com.android.wallpaper.picker.data.Destination
 import com.android.wallpaper.picker.preview.PreviewTestActivity
 import com.android.wallpaper.testing.TestInjector
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.android.wallpaper.util.ExtendedWallpaperEffectsUtils.PHOTO_CROPS
 import com.android.wallpaper.util.ExtendedWallpaperEffectsUtils.PHOTO_URI
 import com.android.wallpaper.util.ExtendedWallpaperEffectsUtils.SOURCE_BITMAP_SCREEN
@@ -118,7 +118,7 @@ class ExtendedWallpaperEffectsUtilsTest {
         testScope.runTest {
             val photoUri = Uri.parse("content://bogus")
             val model =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "id",
                     collectionId = "collection",
                     destination = Destination.NOT_APPLIED,
@@ -147,7 +147,7 @@ class ExtendedWallpaperEffectsUtilsTest {
             val photoUri = Uri.parse("content://bogus")
             val crops = mapOf(Point(1, 2) to Rect(3, 4, 5, 6))
             val model =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "id",
                     collectionId = "collection",
                     destination = Destination.NOT_APPLIED,
@@ -177,7 +177,7 @@ class ExtendedWallpaperEffectsUtilsTest {
     fun startEffects_recentsFromSystem_appliedToSystem_setsSource() =
         testScope.runTest {
             val model =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "id",
                     collectionId = "collection",
                     destination = Destination.APPLIED_TO_SYSTEM,
@@ -202,7 +202,7 @@ class ExtendedWallpaperEffectsUtilsTest {
     fun startEffects_recentsFromSystem_appliedToBoth_setsSource() =
         testScope.runTest {
             val model =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "id",
                     collectionId = "collection",
                     destination = Destination.APPLIED_TO_SYSTEM_LOCK,
@@ -227,7 +227,7 @@ class ExtendedWallpaperEffectsUtilsTest {
     fun startEffects_recentsFromSystem_appliedToLock_setsSource() =
         testScope.runTest {
             val model =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "id",
                     collectionId = "collection",
                     destination = Destination.APPLIED_TO_LOCK,

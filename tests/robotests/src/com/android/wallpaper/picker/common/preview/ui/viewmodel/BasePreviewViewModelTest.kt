@@ -25,7 +25,7 @@ import com.android.wallpaper.picker.common.preview.data.repository.BasePreviewRe
 import com.android.wallpaper.picker.preview.PreviewTestActivity
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.android.wallpaper.util.WallpaperConnection
 import com.google.common.truth.Truth.assertThat
@@ -106,7 +106,7 @@ class BasePreviewViewModelTest {
     fun wallpaper_setWallpaperModelAndWhichPreview_emitsMatchingValues() {
         testScope.runTest {
             val wallpaperModel =
-                WallpaperModelUtils.getStaticWallpaperModel(
+                WallpaperModelTestUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )

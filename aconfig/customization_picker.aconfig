@@ -44,13 +44,6 @@ flag {
 }
 
 flag {
-    name: "fullscreen_preview_flag"
-    namespace: "customization_picker"
-    description: "Enables full screen wallpaper preview"
-    bug: "409100074"
-}
-
-flag {
     name: "fullscreen_preview_flow_fix"
     namespace: "customization_picker"
     description: "Changes the flow of wallpaper preview fullscreen"

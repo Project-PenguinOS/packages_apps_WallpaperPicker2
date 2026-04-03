@@ -58,11 +58,11 @@ class FakeCuratedPhotosInteractorImpl @Inject constructor() : CuratedPhotosInter
                         CollectionCategoryData(
                             wallpaperModels =
                                 mutableListOf(
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper1",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper2",
                                         "collection1",
                                     ),
@@ -84,27 +84,27 @@ class FakeCuratedPhotosInteractorImpl @Inject constructor() : CuratedPhotosInter
                         CollectionCategoryData(
                             wallpaperModels =
                                 mutableListOf(
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper1",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper2",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper3",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper4",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper5",
                                         "collection1",
                                     ),
-                                    WallpaperModelUtils.getStaticWallpaperModel(
+                                    WallpaperModelTestUtils.getStaticWallpaperModel(
                                         "wallpaper6",
                                         "collection1",
                                     ),

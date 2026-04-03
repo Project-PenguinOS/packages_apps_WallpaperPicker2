@@ -32,122 +32,122 @@ import kotlinx.coroutines.flow.asStateFlow
 class FakeCategoryWallpapersInteractor @Inject constructor() : CategoryWallpapersInteractor {
     private val fakeWallpapers: List<WallpaperModel> =
         listOf(
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId1",
                 collectionId = "testCollection1",
                 title = "onDeviceTitle1",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId2",
                 collectionId = "testCollection2",
                 title = "onDeviceTitle2",
             ),
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = "testId3",
                 collectionId = "testCollection3",
                 title = "onDeviceTitle3",

@@ -23,7 +23,7 @@ import com.android.wallpaper.picker.preview.ui.util.ContentHandlingUtil
 import com.android.wallpaper.picker.preview.ui.util.ContentHandlingUtil.toLiveWallpaperModel
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.WallpaperInfoUtils.Companion.createWallpaperInfo
-import com.android.wallpaper.testing.WallpaperModelUtils
+import com.android.wallpaper.testing.WallpaperModelTestUtils
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -56,7 +56,7 @@ class ContentHandlingUtilTest {
         val wallpaperInfo = createWallpaperInfo(context, component)
         val description = WallpaperDescription.Builder().setId(wallpaperId).build()
         val startingModel =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = wallpaperId,
                 collectionId = "",
                 systemWallpaperInfo = wallpaperInfo,
@@ -74,7 +74,7 @@ class ContentHandlingUtilTest {
         val wallpaperInfo = createWallpaperInfo(context, component)
         val description = WallpaperDescription.Builder().setId("id").setComponent(component).build()
         val model =
-            WallpaperModelUtils.getLiveWallpaperModel(
+            WallpaperModelTestUtils.getLiveWallpaperModel(
                 wallpaperId = "id",
                 collectionId = "",
                 systemWallpaperInfo = wallpaperInfo,
@@ -94,7 +94,7 @@ class ContentHandlingUtilTest {
         createWallpaperInfo(context, component)
         val description = WallpaperDescription.Builder().setId("id").setComponent(component).build()
         val model =
-            WallpaperModelUtils.getStaticWallpaperModel(wallpaperId = "id", collectionId = "")
+            WallpaperModelTestUtils.getStaticWallpaperModel(wallpaperId = "id", collectionId = "")
 
         ContentHandlingUtil.updatePreview(context, model, description) { updatedModel ->
             assertThat(updatedModel.liveWallpaperData.description).isEqualTo(description)
@@ -106,7 +106,7 @@ class ContentHandlingUtilTest {
         val component = ComponentName("package", "class")
         val description = WallpaperDescription.Builder().setId("id").setComponent(component).build()
         val bogusModel =
-            WallpaperModelUtils.getStaticWallpaperModel(wallpaperId = "id", collectionId = "")
+            WallpaperModelTestUtils.getStaticWallpaperModel(wallpaperId = "id", collectionId = "")
         var updated = false
 
         ContentHandlingUtil.updatePreview(context, bogusModel, description) { updated = true }
@@ -138,7 +138,7 @@ class ContentHandlingUtilTest {
         val description =
             WallpaperDescription.Builder().setComponent(component).setId(assetId).build()
         val staticModel =
-            WallpaperModelUtils.getStaticWallpaperModel(
+            WallpaperModelTestUtils.getStaticWallpaperModel(
                 wallpaperId = wallpaperId,
                 collectionId = collectionId,
             )
