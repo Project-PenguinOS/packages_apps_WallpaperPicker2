@@ -32,7 +32,7 @@ import com.android.wallpaper.testing.FakeWallpaperClient
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -123,9 +123,9 @@ class WallpaperPreviewInteractorTest {
 
     @Test
     fun setStaticWallpaper_succeeds() = runTest {
-        val asset = WallpaperModelTestUtils.DEFAULT_ASSET
+        val asset = WallpaperModelUtils.DEFAULT_ASSET
         val wallpaperModel =
-            WallpaperModelTestUtils.getStaticWallpaperModel(
+            WallpaperModelUtils.getStaticWallpaperModel(
                 wallpaperId = "testWallpaperId",
                 collectionId = "testCollectionId",
                 placeholderColor = 0,
@@ -160,7 +160,7 @@ class WallpaperPreviewInteractorTest {
                 },
             )
         val wallpaperModel =
-            WallpaperModelTestUtils.getLiveWallpaperModel(
+            WallpaperModelUtils.getLiveWallpaperModel(
                 wallpaperId = "testWallpaperId",
                 collectionId = "testCollectionId",
                 systemWallpaperInfo = wallpaperInfo,

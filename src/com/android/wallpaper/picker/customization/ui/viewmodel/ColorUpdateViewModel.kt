@@ -188,15 +188,6 @@ constructor(
         previewingIsDarkMode.value = isDarkMode
     }
 
-    fun previewColors(
-        @ColorInt colorSeeds: List<Int>,
-        @ThemeStyle.Type style: Int,
-        isDarkMode: Boolean,
-    ) {
-        previewingColorScheme.value = ColorScheme(colorSeeds, isDarkMode, style).materialScheme
-        previewingIsDarkMode.value = isDarkMode
-    }
-
     fun resetPreview() {
         previewingColorScheme.value = null
         previewingIsDarkMode.value = null

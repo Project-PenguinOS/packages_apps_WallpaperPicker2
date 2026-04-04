@@ -24,7 +24,7 @@ import androidx.test.filters.SmallTest
 import com.android.wallpaper.model.WallpaperModelsPair
 import com.android.wallpaper.picker.broadcast.BroadcastDispatcher
 import com.android.wallpaper.testing.FakeWallpaperClient
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -67,7 +67,7 @@ class WallpaperRepository2Test {
         testScope.runTest {
             val testWallpaperModels =
                 WallpaperModelsPair(
-                    WallpaperModelTestUtils.getStaticWallpaperModel(
+                    WallpaperModelUtils.getStaticWallpaperModel(
                         wallpaperId = "testWallpaper",
                         collectionId = "testCollection",
                     ),
@@ -92,7 +92,7 @@ class WallpaperRepository2Test {
             // Set new wallpaper
             val testWallpaperModels2 =
                 WallpaperModelsPair(
-                    WallpaperModelTestUtils.getStaticWallpaperModel(
+                    WallpaperModelUtils.getStaticWallpaperModel(
                         wallpaperId = "testWallpaper2",
                         collectionId = "testCollection2",
                     ),

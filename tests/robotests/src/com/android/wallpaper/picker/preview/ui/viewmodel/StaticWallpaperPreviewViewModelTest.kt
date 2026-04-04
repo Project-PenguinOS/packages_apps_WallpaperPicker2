@@ -44,7 +44,7 @@ import com.android.wallpaper.testing.FakeWallpaperClient
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.android.wallpaper.util.wallpaperconnection.WallpaperConnectionUtils
 import com.google.common.truth.Truth.assertThat
@@ -164,7 +164,7 @@ class StaticWallpaperPreviewViewModelTest {
         testScope.runTest {
             val staticWallpaperModel = collectLastValue(viewModel.staticWallpaperModel)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -192,7 +192,7 @@ class StaticWallpaperPreviewViewModelTest {
             // ShadowWallpaperInfo allows the creation of this object
             val wallpaperInfo = WallpaperInfo(appContext, resolveInfo)
             val liveWallpaperModel =
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -210,7 +210,7 @@ class StaticWallpaperPreviewViewModelTest {
         testScope.runTest {
             val lowResBitmap = collectLastValue(viewModel.lowResBitmap)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -227,7 +227,7 @@ class StaticWallpaperPreviewViewModelTest {
         testScope.runTest {
             val fullResWallpaperViewModel = collectLastValue(viewModel.fullResWallpaperViewModel)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -247,7 +247,7 @@ class StaticWallpaperPreviewViewModelTest {
         testScope.runTest {
             val fullResWallpaperViewModel = collectLastValue(viewModel.fullResWallpaperViewModel)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -277,7 +277,7 @@ class StaticWallpaperPreviewViewModelTest {
             val subsamplingScaleImageViewModel =
                 collectLastValue(viewModel.subsamplingScaleImageViewModel)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -324,7 +324,7 @@ class StaticWallpaperPreviewViewModelTest {
                 )
             // subsamplingScaleImageViewModel
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = WALLPAPER_ID,
                     collectionId = "testCollection",
                 )
@@ -350,7 +350,7 @@ class StaticWallpaperPreviewViewModelTest {
                 )
             val wallpaperColors = collectLastValue(viewModel.wallpaperColors)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = WALLPAPER_ID,
                     collectionId = "testCollection",
                 )
@@ -385,7 +385,7 @@ class StaticWallpaperPreviewViewModelTest {
                 )
             val wallpaperColors = collectLastValue(viewModel.wallpaperColors)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )
@@ -425,7 +425,7 @@ class StaticWallpaperPreviewViewModelTest {
                 )
             val wallpaperColors = collectLastValue(viewModel.wallpaperColors)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = WALLPAPER_ID,
                     collectionId = "testCollection",
                 )
@@ -467,7 +467,7 @@ class StaticWallpaperPreviewViewModelTest {
                 )
             val wallpaperColors = collectLastValue(viewModel.wallpaperColors)
             val testStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                 )

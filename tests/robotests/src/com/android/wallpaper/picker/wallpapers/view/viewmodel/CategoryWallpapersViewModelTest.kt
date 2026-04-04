@@ -35,7 +35,7 @@ import com.android.wallpaper.picker.wallpapers.ui.view.viewmodel.CategoryWallpap
 import com.android.wallpaper.testing.FakeCategoryWallpapersInteractor
 import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -136,7 +136,7 @@ class CategoryWallpapersViewModelTest {
 
         fakeCategoryWallpapersInteractor.setWallpapers(
             listOf(
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -144,7 +144,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "hello",
                     creativeWallpaperData = creativeWallpaperData,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -152,7 +152,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "hello",
                     creativeWallpaperData = creativeWallpaperData,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -160,7 +160,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "hello",
                     creativeWallpaperData = creativeWallpaperData,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -222,7 +222,7 @@ class CategoryWallpapersViewModelTest {
 
         fakeCategoryWallpapersInteractor.setWallpapers(
             listOf(
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testId1",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -230,7 +230,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "hello",
                     creativeWallpaperData = creativeWallpaperData,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testId2",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -238,22 +238,22 @@ class CategoryWallpapersViewModelTest {
                     groupName = "hello",
                     creativeWallpaperData = creativeWallpaperData,
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId3",
                     collectionId = "testCollection1",
                     title = "static wp 1",
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId4",
                     collectionId = "testCollection2",
                     title = "static wp 2",
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId5",
                     collectionId = "testCollection3",
                     title = "static wp 3",
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testId6",
                     collectionId = "testCollection",
                     title = "live walpaper no group 1",
@@ -261,7 +261,7 @@ class CategoryWallpapersViewModelTest {
                     systemWallpaperInfo = wallpaperInfo,
                     isApplied = false,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testId7",
                     collectionId = "testCollection",
                     title = "live walpaper no group 2",
@@ -307,12 +307,12 @@ class CategoryWallpapersViewModelTest {
     fun sections_verifyOnClickAction() = runTest {
         fakeCategoryWallpapersInteractor.setWallpapers(
             listOf(
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId3",
                     collectionId = "testCollection1",
                     title = "static wp 1",
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId4",
                     collectionId = "testCollection2",
                     title = "static wp 2",
@@ -357,17 +357,17 @@ class CategoryWallpapersViewModelTest {
     fun sections_verifyThatPlainThumbnailsAreResizeable() = runTest {
         fakeCategoryWallpapersInteractor.setWallpapers(
             listOf(
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId3",
                     collectionId = "testCollection1",
                     title = "static wp 1",
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId4",
                     collectionId = "testCollection2",
                     title = "static wp 2",
                 ),
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId5",
                     collectionId = "testCollection3",
                     title = "static wp 3",
@@ -432,7 +432,7 @@ class CategoryWallpapersViewModelTest {
 
         fakeCategoryWallpapersInteractor.setWallpapers(
             listOf(
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -440,7 +440,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "templates",
                     creativeWallpaperData = creativeWallpaperDataTemplate,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -448,7 +448,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "templates",
                     creativeWallpaperData = creativeWallpaperDataTemplate,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,
@@ -456,7 +456,7 @@ class CategoryWallpapersViewModelTest {
                     groupName = "standard",
                     creativeWallpaperData = creativeWallpaperDataStandard,
                 ),
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollection",
                     systemWallpaperInfo = wallpaperInfo,

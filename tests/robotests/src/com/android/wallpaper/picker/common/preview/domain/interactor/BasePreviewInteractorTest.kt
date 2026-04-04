@@ -27,7 +27,7 @@ import com.android.wallpaper.picker.preview.PreviewTestActivity
 import com.android.wallpaper.testing.FakeWallpaperClient
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestWallpaperPreferences
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.EntryPoint
@@ -106,17 +106,17 @@ class BasePreviewInteractorTest {
     fun wallpapers_withHomeAndLockScreenAndPreviewWallpapers_shouldEmitPreview() {
         testScope.runTest {
             val homeStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "homeWallpaperId",
                     collectionId = "homeCollection",
                 )
             val lockStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "lockWallpaperId",
                     collectionId = "lockCollection",
                 )
             val previewStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "previewWallpaperId",
                     collectionId = "previewCollection",
                 )
@@ -124,7 +124,7 @@ class BasePreviewInteractorTest {
             // Current wallpaper models need to be set up before the view model is run.
             wallpaperClient.setCurrentWallpaperModels(
                 homeStaticWallpaperModel,
-                lockStaticWallpaperModel,
+                lockStaticWallpaperModel
             )
             basePreviewRepository.setWallpaperModel(previewStaticWallpaperModel)
 
@@ -138,12 +138,12 @@ class BasePreviewInteractorTest {
     fun wallpapers_withHomeAndLockScreenAndNoPreviewWallpapers_shouldEmitCurrentHomeAndLock() {
         testScope.runTest {
             val homeStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "homeWallpaperId",
                     collectionId = "homeCollection",
                 )
             val lockStaticWallpaperModel =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "lockWallpaperId",
                     collectionId = "lockCollection",
                 )
@@ -151,7 +151,7 @@ class BasePreviewInteractorTest {
             // Current wallpaper models need to be set up before the view model is run.
             wallpaperClient.setCurrentWallpaperModels(
                 homeStaticWallpaperModel,
-                lockStaticWallpaperModel,
+                lockStaticWallpaperModel
             )
 
             val actual = collectLastValue(interactor.wallpapers)()

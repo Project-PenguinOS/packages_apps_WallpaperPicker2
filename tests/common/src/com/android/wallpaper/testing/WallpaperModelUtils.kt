@@ -37,7 +37,7 @@ import com.android.wallpaper.picker.data.WallpaperId
 import com.android.wallpaper.picker.data.WallpaperModel
 import com.android.wallpaper.util.converter.WallpaperModelFactory
 
-class WallpaperModelTestUtils {
+class WallpaperModelUtils {
     companion object {
         const val SAMPLE_TITLE1 = "wallpaper-1"
         const val SAMPLE_TITLE2 = "wallpaper-2"

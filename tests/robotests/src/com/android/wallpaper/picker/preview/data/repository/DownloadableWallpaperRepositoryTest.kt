@@ -31,7 +31,7 @@ import com.android.wallpaper.picker.preview.shared.model.DownloadableWallpaperMo
 import com.android.wallpaper.testing.FakeCategoryWallpapersRepository
 import com.android.wallpaper.testing.FakeLiveWallpaperDownloader
 import com.android.wallpaper.testing.ShadowWallpaperInfo
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -171,7 +171,7 @@ class DownloadableWallpaperRepositoryTest {
                     serviceInfo.flags = PackageManager.GET_META_DATA
                 },
             )
-        return WallpaperModelTestUtils.getLiveWallpaperModel(
+        return WallpaperModelUtils.getLiveWallpaperModel(
             wallpaperId = "uniqueId",
             collectionId = "collectionId",
             systemWallpaperInfo = wallpaperInfo,

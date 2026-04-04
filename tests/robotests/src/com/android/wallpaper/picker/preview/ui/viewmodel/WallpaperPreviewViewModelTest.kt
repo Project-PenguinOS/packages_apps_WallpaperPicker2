@@ -54,7 +54,7 @@ import com.android.wallpaper.testing.ShadowWallpaperInfo
 import com.android.wallpaper.testing.TestInjector
 import com.android.wallpaper.testing.TestWallpaperPreferences
 import com.android.wallpaper.testing.WallpaperInfoUtils
-import com.android.wallpaper.testing.WallpaperModelTestUtils
+import com.android.wallpaper.testing.WallpaperModelUtils
 import com.android.wallpaper.testing.collectLastValue
 import com.android.wallpaper.util.PreviewUtils
 import com.android.wallpaper.util.WallpaperConnection.WhichPreview
@@ -189,7 +189,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -212,7 +212,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -234,7 +234,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -253,7 +253,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -276,7 +276,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -297,7 +297,7 @@ class WallpaperPreviewViewModelTest {
             val onNextButtonClicked =
                 collectLastValue(wallpaperPreviewViewModel.onNextButtonClicked)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -362,7 +362,7 @@ class WallpaperPreviewViewModelTest {
     @Test
     fun clickSmallPreview_isSelectedPreview_updatesFullWallpaperPreviewConfig() =
         testScope.runTest {
-            val model = WallpaperModelTestUtils.getStaticWallpaperModel("testId", "testCollection")
+            val model = WallpaperModelUtils.getStaticWallpaperModel("testId", "testCollection")
             updateFullWallpaperFlow(model, WhichPreview.PREVIEW_CURRENT, listOf(HANDHELD))
             wallpaperPreviewViewModel.setSmallPreviewSelectedTab(Screen.LOCK_SCREEN)
             val onLockPreviewClicked =
@@ -435,7 +435,7 @@ class WallpaperPreviewViewModelTest {
         testScope.runTest {
             val newCropRect = Rect(10, 10, 10, 10)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
@@ -465,7 +465,7 @@ class WallpaperPreviewViewModelTest {
     fun previewLiveWallpaper_disablesCropping() =
         testScope.runTest {
             val model =
-                WallpaperModelTestUtils.getLiveWallpaperModel(
+                WallpaperModelUtils.getLiveWallpaperModel(
                     wallpaperId = "testWallpaperId",
                     collectionId = "testCollectionId",
                     systemWallpaperInfo = effectsWallpaperInfo,
@@ -488,7 +488,7 @@ class WallpaperPreviewViewModelTest {
                 collectLastValue(wallpaperPreviewViewModel.onSetWallpaperButtonClicked)
             val newCropRect = Rect(10, 10, 10, 10)
             val model =
-                WallpaperModelTestUtils.getStaticWallpaperModel(
+                WallpaperModelUtils.getStaticWallpaperModel(
                     wallpaperId = "testId",
                     collectionId = "testCollection",
                 )
