@@ -30,6 +30,8 @@ import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.ViewStub
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Toolbar
@@ -44,7 +46,6 @@ import androidx.core.graphics.Insets
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -275,40 +276,34 @@ class CustomizationPickerFragment :
         // updateHeaderHeightConstraints to make sure of the screen dimensions.
         bottomScrollView.alpha = 0f
 
-        // Override bottom scroll view's accessibility delegate to enable collapse and expand of
-        // the preview and the wallpaper entry.
-        ViewCompat.setAccessibilityDelegate(
-            bottomScrollView,
-            object : AccessibilityDelegateCompat() {
-                override fun onInitializeAccessibilityNodeInfo(
-                    host: View,
-                    info: AccessibilityNodeInfoCompat,
-                ) {
-                    super.onInitializeAccessibilityNodeInfo(host, info)
-                    if (pickerMotionContainer.currentState == R.id.expanded_header_primary) {
-                        info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD)
-                    } else {
-                        info.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD)
+        // Override bottom scroll view's accessibility delegate to enable the user to expand it
+        // once it's been collapsed
+        bottomScrollView.accessibilityDelegate?.let { base ->
+            bottomScrollView.setAccessibilityDelegate(
+                object : ForwardingAccessibilityDelegate(base) {
+                    override fun onInitializeAccessibilityNodeInfo(
+                        host: View,
+                        info: AccessibilityNodeInfo,
+                    ) {
+                        super.onInitializeAccessibilityNodeInfo(host, info)
+                        if (pickerMotionContainer.currentState == R.id.collapsed_header_primary) {
+                            info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+                        }
+                    }
+
+                    override fun performAccessibilityAction(
+                        host: View,
+                        action: Int,
+                        args: Bundle?,
+                    ): Boolean {
+                        if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) {
+                            pickerMotionContainer.transitionToState(R.id.expanded_header_primary)
+                        }
+                        return super.performAccessibilityAction(host, action, args)
                     }
                 }
-
-                override fun performAccessibilityAction(
-                    host: View,
-                    action: Int,
-                    args: Bundle?,
-                ): Boolean {
-                    if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD) {
-                        pickerMotionContainer.transitionToState(R.id.collapsed_header_primary)
-                        return true
-                    } else if (action == AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD) {
-                        pickerMotionContainer.transitionToState(R.id.expanded_header_primary)
-                        return true
-                    }
-                    return super.performAccessibilityAction(host, action, args)
-                }
-            },
-        )
-
+            )
+        }
         val optionContainer: ConstraintLayout =
             view.requireViewById(R.id.customization_option_container)
         val customizationFloatingSheetContainer: FrameLayout =
@@ -1397,5 +1392,72 @@ class CustomizationPickerFragment :
         homePreviewLabel.visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
         homeWallpaperSurface.visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
         homeWorkspaceSurface.visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
+    }
+
+    /**
+     * Utility class for extending [View.AccessibilityDelegate] that forwards all methods to a base
+     * delegate implementation.
+     *
+     * This class exists because setting an AccessibilityDelegate or AccessibilityDelegateCompat
+     * that does not do forwarding causes views like NestedScrollView to behave improperly in
+     * TalkBack, etc.
+     */
+    open class ForwardingAccessibilityDelegate(val base: View.AccessibilityDelegate) :
+        View.AccessibilityDelegate() {
+        override fun sendAccessibilityEvent(host: View, eventType: Int) {
+            base.sendAccessibilityEvent(host, eventType)
+        }
+
+        override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+            base.onInitializeAccessibilityNodeInfo(host, info)
+        }
+
+        override fun performAccessibilityAction(host: View, action: Int, args: Bundle?): Boolean {
+            return base.performAccessibilityAction(host, action, args)
+        }
+
+        override fun sendAccessibilityEventUnchecked(host: View, event: AccessibilityEvent) {
+            base.sendAccessibilityEventUnchecked(host, event)
+        }
+
+        override fun dispatchPopulateAccessibilityEvent(
+            host: View,
+            event: AccessibilityEvent,
+        ): Boolean {
+            return base.dispatchPopulateAccessibilityEvent(host, event)
+        }
+
+        override fun onPopulateAccessibilityEvent(host: View, event: AccessibilityEvent) {
+            base.onPopulateAccessibilityEvent(host, event)
+        }
+
+        override fun onInitializeAccessibilityEvent(host: View, event: AccessibilityEvent) {
+            base.onInitializeAccessibilityEvent(host, event)
+        }
+
+        override fun addExtraDataToAccessibilityNodeInfo(
+            host: View,
+            info: AccessibilityNodeInfo,
+            extraDataKey: String,
+            arguments: Bundle?,
+        ) {
+            base.addExtraDataToAccessibilityNodeInfo(host, info, extraDataKey, arguments)
+        }
+
+        override fun onRequestSendAccessibilityEvent(
+            host: ViewGroup,
+            child: View,
+            event: AccessibilityEvent,
+        ): Boolean {
+            return base.onRequestSendAccessibilityEvent(host, child, event)
+        }
+
+        override fun getAccessibilityNodeProvider(host: View): AccessibilityNodeProvider? {
+            return base.getAccessibilityNodeProvider(host)
+        }
+
+        override fun createAccessibilityNodeInfo(host: View): AccessibilityNodeInfo {
+            return base.createAccessibilityNodeInfo(host)
+        }
     }
 }
