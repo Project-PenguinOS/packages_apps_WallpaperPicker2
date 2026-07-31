@@ -27,6 +27,7 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -104,18 +105,22 @@ constructor(
         }
 
         if (areRecentsAvailable()) {
-            context.contentResolver.registerContentObserver(
-                LIST_RECENTS_URI,
-                /* notifyForDescendants= */ true,
-                object : ContentObserver(null) {
-                    override fun onChange(selfChange: Boolean) {
-                        backgroundScope.launch {
-                            recentHomeWallpapers.value = queryRecentWallpapers(destination = HOME)
-                            recentLockWallpapers.value = queryRecentWallpapers(destination = LOCK)
+            try {
+                context.contentResolver.registerContentObserver(
+                    LIST_RECENTS_URI,
+                    /* notifyForDescendants= */ true,
+                    object : ContentObserver(null) {
+                        override fun onChange(selfChange: Boolean) {
+                            backgroundScope.launch {
+                                recentHomeWallpapers.value = queryRecentWallpapers(destination = HOME)
+                                recentLockWallpapers.value = queryRecentWallpapers(destination = LOCK)
+                            }
                         }
-                    }
-                },
-            )
+                    },
+                )
+            } catch (e: Throwable) {
+                Log.w(TAG, "Failed to register recents content observer", e)
+            }
         }
     }
 
@@ -598,7 +603,17 @@ constructor(
         if (recentsContentProviderAvailable == null) {
             recentsContentProviderAvailable =
                 try {
-                    context.packageManager.resolveContentProvider(AUTHORITY, 0) != null
+                    val providerInfo = context.packageManager.resolveContentProvider(AUTHORITY, 0)
+                    if (providerInfo != null) {
+                        val perm = providerInfo.readPermission ?: providerInfo.writePermission
+                        if (perm != null) {
+                            context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
+                        } else {
+                            true
+                        }
+                    } else {
+                        false
+                    }
                 } catch (e: Exception) {
                     Log.w(
                         TAG,
